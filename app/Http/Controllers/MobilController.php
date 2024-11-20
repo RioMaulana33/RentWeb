@@ -1,0 +1,119 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use App\Models\Mobil;
+
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\DB;
+
+class MobilController extends Controller
+{
+    public function index(Request $request)
+    {
+        $per = $request->per ?? 10;
+        $page = $request->page ? $request->page - 1 : 0;
+
+        DB::statement('set @no=0+' . $page * $per);
+        $data = Mobil::when($request->search, function (Builder $query, string $search) {
+            $query->where('merk', 'like', "%$search%");
+        })->latest()->paginate($per, ['*', DB::raw('@no := @no + 1 AS no')]);
+
+        return response()->json($data);
+    }
+
+    public function add(Request $request)
+    {
+        // simpan data
+        $base = Mobil::create([
+            'merk'  => $request->input('merk'),
+            'model'  => $request->input('model'),
+            'tahun'  => $request->input('tahun'),
+            'tarif'  => $request->input('tarif'),
+            'kapasitas'  => $request->input('kapasitas'),
+            'foto' => str_replace('public/', '', $request->file('foto')->store('public/mobil')),
+
+        ]);
+
+        //response
+        return response()->json([
+            'status' => true,
+            'message' => 'Data Mobil telah disimpan'
+        ]);
+    }
+    public function edit($uuid)
+    {
+        $base = Mobil::findByUuid($uuid);
+
+        return response()->json([
+            'data' => $base,
+        ], 200);
+    }
+
+    public function get()
+    {
+        return response()->json(['data' => Mobil::all()]);
+    }
+
+
+
+    public function update($uuid, Request $request)
+    {
+        $mobil = Mobil::findByUuid($uuid);
+        $mobil->update($request->all());
+    
+        // Validasi untuk data umum tanpa memaksa `foto` harus diisi
+        $request->validate([
+            'merk' => 'required|string',
+            'model' => 'required|string',
+            'tahun' => 'nullable|integer',
+            'tarif' => 'required|numeric',
+            'kapasitas' => 'required|integer',
+        ]);
+    
+        // Update data umum
+        $mobil->update($request->only([
+            'merk',
+            'model',
+            'tahun',
+            'tarif',
+            'kapasitas',
+        ]));
+    
+        // Jika ada file foto yang diunggah, lakukan update
+        if ($request->hasFile('foto')) {
+            // Hapus foto lama jika ada
+            if ($mobil->foto) {
+                Storage::delete(str_replace('public/', '', $mobil->foto));
+            }
+    
+            // Simpan file foto baru
+            $mobil->update([
+                'foto' => str_replace('public/', '', $request->file('foto')->store('public/mobil')),
+            ]);
+        }
+    
+        return response()->json([
+            'status' => 'true',
+            'message' => 'Data berhasil diubah'
+        ]);
+    }
+    
+    public function destroy($uuid)
+    {
+        $Mobil = Mobil::findByUuid($uuid);
+        if ($Mobil) {
+            $Mobil->delete();
+            return response()->json([
+                'message' => "Data telah dihapus",
+                'code' => 200
+            ]);
+        } else {
+            return response([
+                'message' => "gagal menghapus $uuid / data tidak ditemukan"
+            ]);
+        }
+    }
+}
