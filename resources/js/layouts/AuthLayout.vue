@@ -18,7 +18,7 @@
 		  <!--begin::Illustration-->
 		  <div v-if="!isPasswordResetPage" class="d-flex flex-center flex-column px-15 py-15 w-50 bg-light">
 			<div class="text-center mb-10" style="max-width: 90%; width: 500px;">
-			  <img src="/media/misc/vector_auth.png" alt="Illustration" class="img-fluid w-100">
+			  <img src="/media/misc/vector-auth.png" alt="Illustration" class="img-fluid w-100">
 			</div>
 			<h3 class="text-center mb-4"> Kemudahan dalam Genggaman!</h3>
 			<p class="text-center fs-5">Sewa Mobil Mudah, Perjalanan Lebih Seru.</p>

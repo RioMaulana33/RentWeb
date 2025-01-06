@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Mobil;
+use App\Models\StokMobil;
 
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Database\Eloquent\Builder;
@@ -24,15 +25,30 @@ class MobilController extends Controller
         return response()->json($data);
     }
 
+    public function getMobilByKota(Request $request, $kota_id)
+    {
+        $data = StokMobil::with('mobil', 'kota')
+            ->where('kota_id', $kota_id)
+            ->where('stok', '>', 0) 
+            ->get();
+    
+        return response()->json([
+            'status' => true,
+            'data' => $data,
+        ]);
+    }
+    
     public function add(Request $request)
     {
         // simpan data
         $base = Mobil::create([
             'merk'  => $request->input('merk'),
             'model'  => $request->input('model'),
+            'type'  => $request->input('type'),
             'tahun'  => $request->input('tahun'),
             'tarif'  => $request->input('tarif'),
             'kapasitas'  => $request->input('kapasitas'),
+            'bahan_bakar'  => $request->input('bahan_bakar'),
             'foto' => str_replace('public/', '', $request->file('foto')->store('public/mobil')),
 
         ]);
@@ -68,18 +84,22 @@ class MobilController extends Controller
         $request->validate([
             'merk' => 'required|string',
             'model' => 'required|string',
+            'type' => 'nullable|string',
             'tahun' => 'nullable|integer',
             'tarif' => 'required|numeric',
             'kapasitas' => 'required|integer',
+            'bahan_bakar' => 'nullable|string',
         ]);
     
         // Update data umum
         $mobil->update($request->only([
             'merk',
             'model',
+            'type',
             'tahun',
             'tarif',
             'kapasitas',
+            'bahan_bakar',
         ]));
     
         // Jika ada file foto yang diunggah, lakukan update

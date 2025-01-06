@@ -80,6 +80,17 @@ const routes: Array<RouteRecordRaw> = [
                 },
             },
             {
+                path: "/dashboard/kelola-mobil/stok",
+                name: "kelola-mobil.stok",
+
+                component: () =>
+                    import("@/pages/dashboard/kelola-mobil/stok/Index.vue"),
+                meta: {
+                    pageTitle: "Stok Mobil",
+                    breadcrumbs: ["Kelola Mobil", "Stok Mobil"],
+                },
+            },
+            {
                 path: "/dashboard/kelola-mobil/detail",
                 name: "kelola-mobil.detail",
 
@@ -115,6 +126,26 @@ const routes: Array<RouteRecordRaw> = [
 
             // MASTER
             {
+                path: "/dashboard/master/delivery",
+                name: "dashboard.master.delivery",
+                component: () =>
+                    import("@/pages/dashboard/master/delivery/Index.vue"),
+                meta: {
+                    pageTitle: "Delivery",
+                    breadcrumbs: ["Master", "Delivery"],
+                },
+            },
+            {
+                path: "/dashboard/master/kota",
+                name: "dashboard.master.kota",
+                component: () =>
+                    import("@/pages/dashboard/master/kota/Index.vue"),
+                meta: {
+                    pageTitle: "Kota",
+                    breadcrumbs: ["Master", "Kota"],
+                },
+            },
+            {
                 path: "/dashboard/master/users/roles",
                 name: "dashboard.master.users.roles",
                 component: () =>
@@ -136,6 +167,7 @@ const routes: Array<RouteRecordRaw> = [
             },
         ],
     },
+
     {
         path: "/",
         component: () => import("@/layouts/AuthLayout.vue"),
@@ -202,7 +234,23 @@ const routes: Array<RouteRecordRaw> = [
         path: "/:pathMatch(.*)*",
         redirect: "/404",
     },
+
+     //LANDING
+     {
+        path: "/landing/",
+        name: "landing",
+        component: () =>
+            import("@/pages/landing/Landing.vue")
+    },
+     {
+        path: "/landing/syarat-ketentuan",  
+        name: "syarat-ketentuan",
+        component: () =>
+            import("@/pages/landing/Syarat.vue")
+    },
 ];
+
+
 
 const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),

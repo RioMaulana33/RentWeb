@@ -3,6 +3,7 @@ export interface User {
     uuid: string;
     name: string;
     email: string;
+    photo: string;
     password?: string;
     phone?: BigInteger;
     role_id: BigInteger;

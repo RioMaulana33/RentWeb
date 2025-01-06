@@ -27,6 +27,9 @@ const columns = [
     column.accessor("phone", {
         header: "No. Telp",
     }),
+    column.accessor("verify_ktp", {
+        header: "KTP",
+    }),
     column.accessor("uuid", {
         header: "Aksi",
         cell: (cell) =>

@@ -35,6 +35,7 @@ class UpdateUserRequest extends FormRequest
                 'required',
                 Rule::unique('users')->ignore($this->user->id)
             ],
+            'verify_ktp' => 'nullable',
             'photo' => 'nullable|image',
             'role_id' => 'required|numeric'
         ];

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { h, ref, watch } from "vue";
 import { useDelete } from "@/libs/hooks";
+import { currency } from "@/libs/utils";
 import Form from "./Form.vue";
 import { createColumnHelper } from "@tanstack/vue-table";
 import type { User } from "@/types";
@@ -17,6 +18,9 @@ const { delete: deleteUser } = useDelete({
 const columns = [
     column.accessor("no", {
         header: "No",
+    }),
+    column.accessor("user.email", {
+        header: "Customer",
     }),
     column.accessor("mobil.merk", {
         header: "Mobil",
@@ -57,6 +61,12 @@ const columns = [
     }),
     column.accessor("total_biaya", {
         header: "Total Biaya",
+        cell: (cell) => currency(cell.getValue(), { 
+            style: "currency", 
+            currency: "IDR", 
+            minimumFractionDigits: 0, 
+            maximumFractionDigits: 0 
+        })
     }),
     column.accessor("alamat_pengantaran", {
         header: "Alamat Pengantaran",

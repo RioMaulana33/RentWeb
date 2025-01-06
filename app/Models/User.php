@@ -24,6 +24,7 @@ class User extends Authenticatable implements JWTSubject
         'email',
         'password',
         'phone',
+        'verify_ktp',
         'photo',
     ];
 
@@ -86,5 +87,10 @@ class User extends Authenticatable implements JWTSubject
     public function getPermissionAttribute()
     {
         return $this->getAllPermissions()->pluck('name');
+    }
+
+    public function penyewaan()
+    {
+        return $this->hasMany(Penyewaan::class, 'user_id');
     }
 }

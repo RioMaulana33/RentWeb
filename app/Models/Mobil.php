@@ -15,14 +15,21 @@ class Mobil extends Model
     protected $fillable = [
         "merk",
         "model",
+        "type",
         "tahun",
         "tarif",
         "kapasitas",
+        "bahan_bakar",
         "foto",
     ];
 
     public function Penyewaan ()
     {
         return $this->hasMany(Penyewaan::class);
+    }
+
+    public function stokmobil()
+    {
+        return $this->hasMany(StokMobil::class);
     }
 }

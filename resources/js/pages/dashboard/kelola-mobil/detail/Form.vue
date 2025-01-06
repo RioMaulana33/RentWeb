@@ -4,7 +4,7 @@ import { onMounted, ref, watch, computed } from "vue";
 import * as Yup from "yup";
 import axios from "@/libs/axios";
 import { toast } from "vue3-toastify";
-import type { User, Role } from "@/types";
+import type { User, Role, Mobil } from "@/types";
 import ApiService from "@/core/services/ApiService";
 import { useRole } from "@/services/useRole";
 
@@ -17,7 +17,7 @@ const props = defineProps({
 
 const emit = defineEmits(["close", "refresh"]);
 
-const user = ref<User>({} as User);
+const mobil = ref<User>({} as User);
 const fileTypes = ref(["image/jpeg", "image/png", "image/jpg"]);
 const foto = ref<any>([]);
 const formRef = ref();
@@ -26,33 +26,35 @@ const formSchema = Yup.object().shape({
     merk: Yup.string().required("Merk Mobil harus diisi"),
     model: Yup.string().required("Model Mobil harus diisi"),
     tarif: Yup.string().required("Tarif harus diisi"),
-    foto: Yup.string().required("Foto harus diisi"),
+    // foto: Yup.object().required("Foto harus diisi"),
 });
 
 function getEdit() {
-    block(document.getElementById("form-user"));
+    block(document.getElementById("form-mobil"));
     ApiService.get("mobil/mobil/edit", props.selected)
         .then(({ data }) => {
-            user.value = data.data;
+            mobil.value = data.data;
             foto.value = data.data.foto ? ["/storage/" + data.data.foto] : [];
         })
         .catch((err: any) => {
             toast.error(err.response.data.message);
         })
         .finally(() => {
-            unblock(document.getElementById("form-user"));
+            unblock(document.getElementById("form-mobil"));
         });
 }
 
 function submit() {
     const formData = new FormData();
 
-    formData.append("merk", user.value.merk);
-    formData.append("model", user.value.model);
-    formData.append("tahun", user.value.tahun);
-    formData.append("tarif", user.value.tarif);
-    formData.append("kapasitas", user.value.kapasitas);
-    formData.append("foto", user.value.foto);
+    formData.append("merk", mobil.value.merk);
+    formData.append("model", mobil.value.model);
+    formData.append("type", mobil.value.type);
+    formData.append("tahun", mobil.value.tahun);
+    formData.append("tarif", mobil.value.tarif);
+    formData.append("kapasitas", mobil.value.kapasitas);
+    formData.append("bahan_bakar", mobil.value.bahan_bakar);
+    formData.append("foto", mobil.value.foto);
 
     if (foto.value.length) {
         formData.append("foto", foto.value[0].file);
@@ -60,7 +62,7 @@ function submit() {
     if (props.selected) {
         formData.append("_method", "PUT");
     }
-    block(document.getElementById("form-user"));
+    block(document.getElementById("form-mobil"));
     axios({
         method: "post",
         url: props.selected
@@ -82,7 +84,7 @@ function submit() {
             toast.error(err.response.data.message);
         })
         .finally(() => {
-            unblock(document.getElementById("form-user"));
+            unblock(document.getElementById("form-mobil"));
         });
 }
 
@@ -107,10 +109,10 @@ const formatRupiah = (value: number | string | null | undefined) => {
 
 // Add a computed property to handle input/display conversion
 const TarifFormat = computed({
-    get: () => formatRupiah(user.value.tarif),
+    get: () => formatRupiah(mobil.value.tarif),
     set: (newValue) => {
         // Remove non-numeric characters
-        user.value.tarif = newValue.replace(/[^0-9]/g, '');
+        mobil.value.tarif = newValue.replace(/[^0-9]/g, '');
     }
 });
 
@@ -136,7 +138,7 @@ watch(
         class="form card mb-10"
         @submit="submit"
         :validation-schema="formSchema"
-        id="form-user"
+        id="form-mobil"
         ref="formRef"
     >
         <div class="card-header align-items-center">
@@ -163,7 +165,7 @@ watch(
                             type="text"
                             name="merk"
                             autocomplete="off"
-                            v-model="user.merk"
+                            v-model="mobil.merk"
                             placeholder="Masukkan Merk Mobil"
                         />
                         <div class="fv-plugins-message-container">
@@ -185,12 +187,34 @@ watch(
                             type="text"
                             name="model"
                             autocomplete="off"
-                            v-model="user.model"
+                            v-model="mobil.model"
                             placeholder="Masukkan Model Mobil"
                         />
                         <div class="fv-plugins-message-container">
                             <div class="fv-help-block">
                                 <ErrorMessage name="model" />
+                            </div>
+                        </div>
+                    </div>
+                    <!--end::Input group-->
+                </div>
+                <div class="col-md-6">
+                    <!--begin::Input group-->
+                    <div class="fv-row mb-7">
+                        <label class="form-label fw-bold fs-6 ">
+                            Type
+                        </label>
+                        <Field
+                            class="form-control form-control-lg form-control-solid"
+                            type="text"
+                            name="type"
+                            autocomplete="off"
+                            v-model="mobil.type"
+                            placeholder="Masukkan Model Mobil"
+                        />
+                        <div class="fv-plugins-message-container">
+                            <div class="fv-help-block">
+                                <ErrorMessage name="type" />
                             </div>
                         </div>
                     </div>
@@ -207,7 +231,7 @@ watch(
                             type="number"
                             name="tahun"
                             autocomplete="off"
-                            v-model="user.tahun"
+                            v-model="mobil.tahun"
                             placeholder="Masukkan Tahun Mobil"
                         />
                         <div class="fv-plugins-message-container">
@@ -245,7 +269,7 @@ watch(
                             type="string"
                             name="kapasitas"
                             autocomplete="off"
-                            v-model="user.kapasitas"
+                            v-model="mobil.kapasitas"
                             placeholder="Masukkan Kapasitas Mobil"
                         />
                         <div class="fv-plugins-message-container">
@@ -255,6 +279,27 @@ watch(
                         </div>
                     </div>
                     <!--end::Input group-->
+                </div>
+
+                <div class="col-md-6">
+                    <div class="fv-row mb-7">
+                        <label class="form-label fw-bold fs-6 required">
+                            Bahan Bakar
+                        </label>
+                        <Field name="bahan_bakar" type="hidden" v-model="mobil.bahan_bakar">
+                            <select2 placeholder="Pilih Bahan Bakar" class="form-select-solid" :options="[
+                                { id: 'Bensin', text: 'Bensin'},
+                                { id: 'Solar (Diesel)', text: 'Solar (Diesel)'},
+                                { id: 'Hybrid', text :'Hybrid'}
+                            ]" name="bahan_bakar" v-model="mobil.bahan_bakar">
+                            </select2>
+                        </Field>
+                        <div class="fv-plugins-message-container">
+                            <div class="fv-help-block">
+                                <ErrorMessage name="bahan_bakar" />
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="col-md-12">

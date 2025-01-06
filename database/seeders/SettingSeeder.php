@@ -17,7 +17,7 @@ class SettingSeeder extends Seeder
         DB::table('settings')->truncate();
 
         Setting::create([
-            'app' => 'Rentmate',
+            'app' => 'BluCarra',
             'description' =>  'Aplikasi e-Rental yang menyediakan layanan sewa mobil online',
             'logo' =>  '/media/misc/logoz.png',
             'bg_auth' =>  '/media/misc/bg_auth.jpg',
@@ -27,7 +27,7 @@ class SettingSeeder extends Seeder
             'dinas' =>  'Dinas Lingkungan Hidup',
             'alamat' =>  'Jl. Tentara Genie Pelajar No.26, Petemon, Kec. Sawahan, Surabaya, Jawa Timur 60252',
             'telepon' =>  '08123456789',
-            'email' =>  'rentmate@gmail.com',
+            'email' =>  'blucarra@gmail.com',
         ]);
     }
 }

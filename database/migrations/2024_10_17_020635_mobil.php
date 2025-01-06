@@ -16,9 +16,11 @@ return new class extends Migration
             $table->uuid()->unique();
             $table->string('merk')->nullable();
             $table->string('model')->nullable();
+            $table->string('type')->nullable();
             $table->double('tahun')->nullable();
             $table->double('tarif')->nullable();
             $table->string('kapasitas')->nullable();
+            $table->string('bahan_bakar')->nullable();
             $table->string('foto')->nullable();
             $table->rememberToken();
             $table->timestamps();

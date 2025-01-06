@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Hash;
 use App\Models\Role;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -38,6 +40,7 @@ class UserController extends Controller
         $data = User::when($request->search, function (Builder $query, string $search) {
             $query->where('name', 'like', "%$search%")
                 ->orWhere('email', 'like', "%$search%")
+                ->orWhere('verify_ktp', 'like', "%$search%")
                 ->orWhere('phone', 'like', "%$search%");
         })->latest()->paginate($per, ['*', DB::raw('@no := @no + 1 AS no')]);
 
@@ -88,7 +91,7 @@ class UserController extends Controller
             if ($user->photo) {
                 Storage::disk('public')->delete($user->photo);
             }
-            $validatedData['photo'] = $request->file('photo')->store('photo', 'public');
+            $validatedData['photo'] = $request->file('photo')->store('user', 'public');
         } else {
             if ($user->photo) {
                 Storage::disk('public')->delete($user->photo);
@@ -104,6 +107,47 @@ class UserController extends Controller
         return response()->json([
             'success' => true,
             'user' => $user
+        ]);
+    }
+
+    public function updateMobile(Request $request)
+    {
+      
+        $data = $request->only('name', 'phone', 'photo');
+
+        if ($request->hasFile('photo')) {
+            $data['photo'] = '/storage/' . $request->file('photo')->store('user', 'public');
+        }
+
+        $user = $request->user();
+        $user->update($data);
+
+        return response()->json([
+            'message' => 'Berhasil memperbarui data',
+            'data' => $request->user()
+        ]);
+    }
+
+    public function changePassword(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'password' => 'required|min:8|confirmed',
+        ]);
+    
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => $validator->errors()->first()
+            ], 422);
+        }
+    
+        $user = $request->user();
+        $user->password = Hash::make($request->password);
+        $user->save();
+    
+        return response()->json([
+            'status' => true,
+            'message' => 'Password berhasil diubah.'
         ]);
     }
 

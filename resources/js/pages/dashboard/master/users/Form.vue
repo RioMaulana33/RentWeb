@@ -27,10 +27,10 @@ const formSchema = Yup.object().shape({
     email: Yup.string()
         .email("Email harus valid")
         .required("Email harus diisi"),
-    password: Yup.string().min(8, "Minimal 8 karakter").nullable(),
-    passwordConfirmation: Yup.string()
-        .oneOf([Yup.ref("password")], "Konfirmasi password harus sama")
-        .nullable(),
+    // password: Yup.string().min(8, "Minimal 8 karakter").nullable(),
+    // passwordConfirmation: Yup.string()
+    //     .oneOf([Yup.ref("password")], "Konfirmasi password harus sama")
+    //     .nullable(),
     phone: Yup.string().required("Nomor Telepon harus diisi"),
     role_id: Yup.string().required("Pilih role"),
 });
@@ -188,8 +188,7 @@ watch(
                     </div>
                     <!--end::Input group-->
                 </div>
-                <div class="col-md-6">
-                    <!--begin::Input group-->
+                <!-- <div class="col-md-6">
                     <div class="fv-row mb-7">
                         <label class="form-label fw-bold fs-6">
                             Password
@@ -208,10 +207,8 @@ watch(
                             </div>
                         </div>
                     </div>
-                    <!--end::Input group-->
                 </div>
                 <div class="col-md-6">
-                    <!--begin::Input group-->
                     <div class="fv-row mb-7">
                         <label class="form-label fw-bold fs-6">
                             Konfirmasi Password
@@ -230,8 +227,7 @@ watch(
                             </div>
                         </div>
                     </div>
-                    <!--end::Input group-->
-                </div>
+                </div> -->
                 <div class="col-md-6">
                     <!--begin::Input group-->
                     <div class="fv-row mb-7">
@@ -282,28 +278,28 @@ watch(
                     </div>
                     <!--end::Input group-->
                 </div>
-                <div class="col-md-6">
-                    <!--begin::Input group-->
+                <!-- <div class="col-md-6">
+                    begin::Input group
                     <div class="fv-row mb-7">
                         <label class="form-label fw-bold fs-6">
                             User Photo
                         </label>
-                        <!--begin::Input-->
+                        begin::Input
                         <file-upload
                             :files="photo"
                             :accepted-file-types="fileTypes"
                             required
                             v-on:updatefiles="(file) => (photo = file)"
                         ></file-upload>
-                        <!--end::Input-->
+                        end::Input
                         <div class="fv-plugins-message-container">
                             <div class="fv-help-block">
                                 <ErrorMessage name="photo" />
                             </div>
                         </div>
                     </div>
-                    <!--end::Input group-->
-                </div>
+                    end::Input group
+                </div> -->
             </div>
         </div>
         <div class="card-footer d-flex">

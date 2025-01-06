@@ -17,11 +17,11 @@ class PenyewaanController extends Controller
         $page = $request->page ? $request->page - 1 : 0;
 
         DB::statement('set @no=0+' . $page * $per);
-        $data = Penyewaan::with(['mobil',])->when($request->search, function (Builder $query, string $search) {
-            $query->where('nama_lengkap', 'like', "%$search%")
-                ->orWhere('nip', 'like', "%$search%")
+        $data = Penyewaan::with(['mobil','delivery','user'])->when($request->search, function (Builder $query, string $search) {
+            $query->where('user_id', 'like', "%$search%")
+                ->orWhere('tanggal_mulai', 'like', "%$search%")
                 ->orWhereHas('mobil_id', function ($query) use ($search) {
-                    $query->where('nama_poli', 'like', "%$search%");
+                    $query->where('', 'like', "%$search%");
                 });
         })->latest()->paginate($per, ['*', DB::raw('@no := @no + 1 AS no')]);
 
@@ -31,23 +31,34 @@ class PenyewaanController extends Controller
     }
     public function add(Request $request)
     {
-        // simpan data
-        $base = Penyewaan::create([
-           'mobil_id' => $request->input('mobil_id'),
-           "tanggal_mulai" => $request->input('tanggal_mulai'),
-           "tanggal_selesai" => $request->input('tanggal_selesai'),
-           "rental_option" => $request->input('rental_option'),
-           "status" => $request->input('status'),
-           "total_biaya" => $request->input('total_biaya'),
-             "alamat_pengantaran" => $request->input('alamat_pengantaran'),
+        // Validasi data yang diterima
+        $validated = $request->validate([
+            'mobil_id' => 'required|integer',
+            'delivery_id' => 'required|integer',
+            'tanggal_mulai' => 'required|date',
+            'tanggal_selesai' => 'required|date|after_or_equal:tanggal_mulai',
+            'jam_mulai' => 'required|string',
+            'rental_option' => 'required|string',
+            'status' => 'required|string',
+            'total_biaya' => 'required|numeric',
+            'alamat_pengantaran' => 'nullable|string',
         ]);
-
-        //response
+    
+        // Tambahkan user_id ke data yang akan disimpan
+        $validated['user_id'] = auth()->id(); 
+    
+        
+        $penyewaan = Penyewaan::create($validated);
+    
+        // Response
         return response()->json([
             'status' => true,
-            'message' => 'Data Penyewaaan telah disimpan'
+            'message' => 'Data penyewaan berhasil disimpan.',
+            'data' => $penyewaan, 
         ]);
     }
+    
+
     public function edit($uuid)
     {
         $base = Penyewaan::findByUuid($uuid);
@@ -71,6 +82,7 @@ class PenyewaanController extends Controller
     
         $request->validate([
           'mobil_id' => 'required',
+          'delivery_id' => 'required',  
           'tanggal_mulai' => 'required|date',
           'tanggal_selesai' => 'required|date',
           'rental_option' => 'required|string',
@@ -86,6 +98,8 @@ class PenyewaanController extends Controller
             'total_biaya',
             'alamat_pengantaran',
             'mobil_id',
+            'delivery_id'
+
         ]));
     
         return response()->json([

@@ -18,5 +18,11 @@ class RoleSeeder extends Seeder
             'guard_name' => 'api',
             'full_name' => 'Administrator',
         ]);
+
+        Role::create([
+            'name' => 'user',   
+            'guard_name' => 'api',
+            'full_name' => 'Customer',
+        ]);
     }
 }

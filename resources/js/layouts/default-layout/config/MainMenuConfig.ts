@@ -23,7 +23,7 @@ const MainMenuConfig: Array<MenuItem> = [
                 heading: "Penyewaan",
                 route: "/dashboard/penyewaan",
                 name: "dashboard-penyewaan",
-                keenthemesIcon: "abstract-26",
+                keenthemesIcon: "abstract-20",
             },
             {
                 heading: "Pembayaran",
@@ -43,11 +43,11 @@ const MainMenuConfig: Array<MenuItem> = [
                 keenthemesIcon: "car-3",
                 name: "kelola-mobil",
                 sub: [
-                    // {
-                    //     heading: "Status Mobil",
-                    //     name: "pembayaran-daftartagihanpasien",
-                    //     route: "/dashboard/pembayaran/daftartagihanpasien",
-                    // },
+                    {
+                        heading: "Stok Mobil",
+                        name: "kelola-mobil-stok",
+                        route: "/dashboard/kelola-mobil/stok",
+                    },
                     {
                         heading: "Detail Mobil",
                         name: "kelola-mobil-detail",
@@ -64,6 +64,16 @@ const MainMenuConfig: Array<MenuItem> = [
                 keenthemesIcon: "cube-3",
                 name: "master",
                 sub: [
+                    {
+                        heading: "Delivery",
+                        name: "master-delivery",
+                        route: "/dashboard/master/delivery",
+                    },
+                    {
+                        heading: "Kota",
+                        name: "master-kota",
+                        route: "/dashboard/master/kota",
+                    },
                     {
                         sectionTitle: "User",
                         route: "/users",

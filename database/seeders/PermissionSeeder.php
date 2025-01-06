@@ -19,9 +19,9 @@ class PermissionSeeder extends Seeder
         // Reset cached roles and permissions
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
-        $menuMaster = ['master', 'master-user', 'master-role', ];
+        $menuMaster = ['master', 'master-user', 'master-role', 'master-delivery', 'master-kota' ];
         $menuWebsite = ['website', 'setting','dashboard-penyewaan','dashboard-pembayaran','dashboard-laporan' ];
-        $menuMobil =['kelola-mobil','kelola-mobil-detail' ];
+        $menuMobil =['kelola-mobil','kelola-mobil-detail','kelola-mobil-stok'];
 
         $permissionsByRole = [
             'admin' => ['dashboard', ...$menuMaster, ...$menuWebsite, ...$menuMobil],

@@ -118,7 +118,7 @@ let cssRule =
 // let cssRule2 =
 //     "display:block;border-radius: 0 3px 3px 0;padding:3px 15px;background:#fff;color:#666;font-size: 30px;font-family:Arial, Helvetica, sans-serif;";
 console.log(
-    "%cRentMate",
+    "%cBluCarra",
     cssRule,
     // cssRule2
 );

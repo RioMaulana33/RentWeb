@@ -26,6 +26,9 @@ const columns = [
     column.accessor("model", {
         header: "Model",
     }),
+    column.accessor("type", {
+        header: "Type",
+    }),
     column.accessor("tahun", {
         header: "Tahun",
     }),
@@ -40,6 +43,9 @@ const columns = [
     }),
     column.accessor("kapasitas", {
         header: "Kapasitas",
+    }),
+    column.accessor("bahan_bakar", {
+        header: "Bahan Bakar",
     }),
     column.accessor("foto", {
     header: "Foto mobil",

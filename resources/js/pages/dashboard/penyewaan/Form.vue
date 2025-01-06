@@ -7,6 +7,7 @@ import { toast } from "vue3-toastify";
 import type { User, Role, Mobil } from "@/types";
 import ApiService from "@/core/services/ApiService";
 import { useMobil } from "@/services/useMobil";
+import { useDelivery } from "@/services/useDelivery";
 import dayjs from 'dayjs';
 
 const props = defineProps({
@@ -20,13 +21,15 @@ const emit = defineEmits(["close", "refresh"]);
 
 const user = ref<User>({} as User);
 const formRef = ref();
+const selectedMobilTarif = ref(null);
 
 const formSchema = Yup.object().shape({
     mobil_id: Yup.string().required("Mobil harus diisi"),
     tanggal_mulai: Yup.string().required("Tanggal Mulai harus diisi"),
     tanggal_selesai: Yup.string().required("Tanggal Selesai harus diisi"),
+    jam_mulai: Yup.string().required("Jam Mulai harus diisi"),
     status: Yup.string().required("Status Mobil harus diisi"),
-    rental_option: Yup.string().required("Tarif harus diisi"),
+    rental_option: Yup.string().required("Opsi harus diisi"),
 });
 
 function getEdit() {
@@ -34,6 +37,9 @@ function getEdit() {
     ApiService.get("penyewaan/penyewaan/edit", props.selected)
         .then(({ data }) => {
             user.value = data.data;
+            if (user.value.mobil_id) {
+                getMobilTarif(user.value.mobil_id);
+            }
         })
         .catch((err: any) => {
             toast.error(err.response.data.message);
@@ -43,12 +49,27 @@ function getEdit() {
         });
 }
 
+async function getMobilTarif(mobilId: string) {
+    try {
+        const response = await ApiService.get(`mobil/mobil/get/${mobilId}`);
+        if (response.data && response.data.data) {
+            selectedMobilTarif.value = response.data.tarif;
+            user.value.total_biaya = selectedMobilTarif.value;
+        }
+    } catch (err: any) {
+        console.error("Error fetching mobil tarif:", err);
+        toast.error("Gagal mengambil data tarif mobil");
+    }
+}
+
+
 function submit() {
     const formData = new FormData();
-
     formData.append("mobil_id", user.value.mobil_id);
+    formData.append("delivery_id", user.value.delivery_id);
     formData.append("tanggal_mulai", user.value.tanggal_mulai);
     formData.append("tanggal_selesai", user.value.tanggal_selesai);
+    formData.append("jam_mulai", user.value.jam_mulai);
     formData.append("status", user.value.status);
     formData.append("rental_option", user.value.rental_option);
     formData.append("total_biaya", user.value.total_biaya);
@@ -83,7 +104,6 @@ function submit() {
         });
 }
 
-
 const Mobil = useMobil();
 const mobil = computed(() =>
     Mobil.data.value?.map((item: Mobil) => ({
@@ -92,30 +112,30 @@ const mobil = computed(() =>
     }))
 );
 
+const Delivery = useDelivery();
+const delivery = computed(() =>
+    Delivery.data.value?.map((item: Delivery) => ({
+        id: item.id,
+        text: item.nama,
+    }))
+);
+
 const formatRupiah = (value: number | string | null | undefined) => {
-    // Handle null or undefined
     if (value === null || value === undefined) return '';
-
-    // Convert to string and remove non-numeric characters
     const numericValue = parseFloat(String(value).replace(/[^0-9.-]+/g, ''));
-
-    // Check if the value is a valid number
     if (isNaN(numericValue)) return '';
-
-    // Format to Rupiah
     return new Intl.NumberFormat('id-ID', {
         style: 'currency',
         currency: 'IDR',
         minimumFractionDigits: 0,
         maximumFractionDigits: 0
     }).format(numericValue);
-};
+};;
 
-// Add a computed property to handle input/display conversion
 const totalBiayaFormat = computed({
     get: () => formatRupiah(user.value.total_biaya),
+
     set: (newValue) => {
-        // Remove non-numeric characters
         user.value.total_biaya = newValue.replace(/[^0-9]/g, '');
     }
 });
@@ -125,9 +145,17 @@ onMounted(async () => {
         getEdit();
     }
 
-    // Set the initial value of tanggal_mulai to today
     user.value.tanggal_mulai = dayjs().toISOString().slice(0, 10);
 });
+
+watch(() => user.value.mobil_id, async (newMobilId) => {
+    if (newMobilId) {
+        await getMobilTarif(newMobilId);
+    } else {
+        user.value.total_biaya = '';
+    }
+});
+
 
 watch(
     () => props.selected,
@@ -213,6 +241,46 @@ watch(
                     </div>
                 </div>
 
+                <div class="col-md-6">
+                    <div class="fv-row mb-7">
+                        <label class="form-label fw-bold fs-6 required">
+                            Jam Mulai
+                        </label>
+                        <Field name="jam_mulai" type="hidden" :v-model="user.jam_mulai"
+                            class="form-control form-control-lg form-control-solid">
+                            <date-picker placeholder="Pilih Jam Mulai" :config="{
+                                enableTime: true,
+                                noCalendar: true,
+                                format: 'H:i'
+                            }" class="form-select-solid" name="jam_mulai"
+                                v-model="user.jam_mulai" />
+                        </Field>
+                        <div class="fv-plugins-message-container">
+                            <div class="fv-help-block">
+                                <ErrorMessage name="jam_mulai" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="fv-row mb-7">
+                        <label class="form-label fw-bold fs-6 required">
+                            Pilih Metode
+                        </label>
+                        <Field name="delivery_id" type="hidden" v-model="user.delivery_id">
+                            <select2 placeholder="Pilih Metode" class="form-select-solid" :options="delivery"
+                                name="delivery_id" v-model="user.delivery_id">
+                            </select2>
+                        </Field>
+                        <div class="fv-plugins-message-container">
+                            <div class="fv-help-block">
+                                <ErrorMessage name="delivery_id" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Row 2: Rental Option & Status -->
                 <div class="col-md-6">
                     <div class="fv-row mb-7">
@@ -220,7 +288,7 @@ watch(
                             Rental Option
                         </label>
                         <Field name="rental_option" type="hidden" v-model="user.rental_option">
-                            <select2 placeholder="Pilih RentalOption" class="form-select-solid" :options="[
+                            <select2 placeholder="Pilih Rental Option" class="form-select-solid" :options="[
                                 { id: 'Dengan Kunci', text: 'Dengan Kunci' },
                                 { id: 'Lepas Kunci', text: 'Lepas Kunci' },
                             ]" name="rental_option" v-model="user.rental_option">
@@ -242,8 +310,8 @@ watch(
                         <Field name="status" type="hidden" v-model="user.status">
                             <select2 placeholder="Pilih Status" class="form-select-solid" :options="[
                                 { id: 'Aktif', text: 'Aktif' },
-                                { id: 'Selesai', text: 'Selesai' },
                                 { id: 'Delay', text: 'Delay' },
+                                { id: 'Selesai', text: 'Selesai' },
                             ]" name="status" v-model="user.status">
                             </select2>
                         </Field>
@@ -262,7 +330,7 @@ watch(
                             Total Biaya
                         </label>
                         <Field class="form-control form-control-lg form-control-solid" type="text" name="total_biaya"
-                            v-model="totalBiayaFormat" placeholder="Masukkan Total Biaya Mobil" />
+                            v-model="totalBiayaFormat" placeholder="Total Biaya Mobil" />
                         <div class="fv-plugins-message-container">
                             <div class="fv-help-block">
                                 <ErrorMessage name="total_biaya" />
