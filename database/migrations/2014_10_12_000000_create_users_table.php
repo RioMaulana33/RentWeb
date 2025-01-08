@@ -20,6 +20,10 @@ return new class extends Migration
             $table->string('verify_ktp')->nullable();
             $table->string('photo')->nullable();
             $table->string('password');
+            $table->string('verification_code')->nullable();
+            $table->string('verification_token')->nullable();
+            $table->timestamp('email_verified_at')->nullable();
+            $table->timestamp('token_expired_at')->nullable();
             $table->rememberToken();
             $table->timestamps();
         });

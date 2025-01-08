@@ -304,7 +304,7 @@
             &copy; 2024 BluCarra. Hak Cipta Dilindungi.
           </p>
           <div>
-            <a href="#" style="color: #93C5FD; text-decoration: none; margin-right: 20px; font-size: 0.9rem;">Kebijakan
+            <a href="/landing/syarat-ketentuan" style="color: #93C5FD; text-decoration: none; margin-right: 20px; font-size: 0.9rem;">Kebijakan
               Privasi</a>
             <a href="/landing/syarat-ketentuan" style="color: #93C5FD; text-decoration: none; font-size: 0.9rem;">Syarat & Ketentuan</a>
           </div>
