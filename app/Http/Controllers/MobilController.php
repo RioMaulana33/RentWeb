@@ -25,17 +25,45 @@ class MobilController extends Controller
         return response()->json($data);
     }
 
-    public function getMobilByKota(Request $request, $kota_id)
-    {
-        $data = StokMobil::with('mobil', 'kota')
-            ->where('kota_id', $kota_id)
-            ->where('stok', '>', 0) 
-            ->get();
+    // public function getMobilByKota(Request $request, $kota_id)
+    // {
+    //     $data = StokMobil::with('mobil', 'kota')
+    //         ->where('kota_id', $kota_id)
+    //         ->where('stok', '>', 0) 
+    //         ->get();
     
-        return response()->json([
-            'status' => true,
-            'data' => $data,
-        ]);
+    //     return response()->json([
+    //         'status' => true,
+    //         'data' => $data,
+    //     ]);
+    // }
+
+    public function getMobilByKota($kota_id)
+    {
+        try {
+            $availableMobil = StokMobil::with(['mobil'])
+                ->where('kota_id', $kota_id)
+                ->where('stok', '>', 0)
+                ->get()
+                ->map(function ($stok) {
+                    return [
+                        'id' => $stok->mobil->id,
+                        'text' => "{$stok->mobil->merk} {$stok->mobil->model} (Stok: {$stok->stok})",
+                        'stok' => $stok->stok,
+                        'tarif' => $stok->mobil->tarif
+                    ];
+                });
+
+            return response()->json([
+                'status' => true,
+                'data' => $availableMobil
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Gagal mengambil data mobil: ' . $e->getMessage()
+            ], 500);
+        }
     }
     
     public function add(Request $request)

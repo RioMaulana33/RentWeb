@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Penyewaan;
+use App\Models\StokMobil;
 
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Database\Eloquent\Builder;
@@ -29,12 +30,51 @@ class PenyewaanController extends Controller
 
         return response()->json($data);
     }
+
+    private function checkAvailability($mobil_id, $kota_id, $tanggal_mulai, $tanggal_selesai)
+    {
+        // Ambil data stok total untuk mobil dan kota tersebut
+        $stokMobil = StokMobil::where('mobil_id', $mobil_id)
+            ->where('kota_id', $kota_id)
+            ->first();
+
+        if (!$stokMobil) {
+            return [
+                'available' => false,
+                'message' => 'Mobil tidak tersedia di kota ini'
+            ];
+        }
+
+        // Hitung jumlah mobil yang sedang disewa pada rentang tanggal yang diminta
+        $activeRentals = Penyewaan::where('mobil_id', $mobil_id)
+            ->where(function ($query) use ($tanggal_mulai, $tanggal_selesai) {
+                $query->whereBetween('tanggal_mulai', [$tanggal_mulai, $tanggal_selesai])
+                    ->orWhereBetween('tanggal_selesai', [$tanggal_mulai, $tanggal_selesai])
+                    ->orWhere(function ($q) use ($tanggal_mulai, $tanggal_selesai) {
+                        $q->where('tanggal_mulai', '<=', $tanggal_mulai)
+                            ->where('tanggal_selesai', '>=', $tanggal_selesai);
+                    });
+            })
+            ->where('status', '!=', 'cancelled')
+            ->count();
+
+        $available = $activeRentals < $stokMobil->stok;
+
+        return [
+            'available' => $available,
+            'message' => $available ? 'Mobil tersedia' : 'Mobil tidak tersedia untuk periode ini',
+            'active_rentals' => $activeRentals,
+            'total_stock' => $stokMobil->stok
+        ];
+    }
+
     public function add(Request $request)
     {
         // Validasi data yang diterima
         $validated = $request->validate([
             'mobil_id' => 'required|integer',
             'delivery_id' => 'required|integer',
+            'kota_id' => 'required|integer',
             'tanggal_mulai' => 'required|date',
             'tanggal_selesai' => 'required|date|after_or_equal:tanggal_mulai',
             'jam_mulai' => 'required|string',
@@ -43,20 +83,34 @@ class PenyewaanController extends Controller
             'total_biaya' => 'required|numeric',
             'alamat_pengantaran' => 'nullable|string',
         ]);
-    
+
+        // Cek ketersediaan mobil
+        $availability = $this->checkAvailability(
+            $validated['mobil_id'],
+            $validated['kota_id'],
+            $validated['tanggal_mulai'],
+            $validated['tanggal_selesai']
+        );
+
+        if (!$availability['available']) {
+            return response()->json([
+                'status' => false,
+                'message' => $availability['message']
+            ], 422);
+        }
+
         // Tambahkan user_id ke data yang akan disimpan
-        $validated['user_id'] = auth()->id(); 
-    
+        $validated['user_id'] = auth()->id();
         
         $penyewaan = Penyewaan::create($validated);
     
-        // Response
         return response()->json([
             'status' => true,
             'message' => 'Data penyewaan berhasil disimpan.',
-            'data' => $penyewaan, 
+            'data' => $penyewaan,
         ]);
     }
+
     
 
     public function edit($uuid)

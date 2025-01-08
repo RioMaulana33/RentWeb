@@ -25,11 +25,17 @@ const columns = [
     column.accessor("mobil.merk", {
         header: "Mobil",
     }),
+    column.accessor("kota.nama", {
+        header: "Kota",
+    }),
     column.accessor("tanggal_mulai", {
         header: "Tanggal Mulai",
     }),
     column.accessor("tanggal_selesai", {
         header: "Tanggal Selesai",
+    }),
+    column.accessor("jam_mulai", {
+        header: "Jam Mulai",
     }),
     column.accessor("rental_option", {
         header: "Rental Option",
@@ -74,19 +80,20 @@ const columns = [
 
     column.accessor("uuid", {
         header: "Aksi",
+
         cell: (cell) =>
             h("div", { class: "d-flex gap-2" }, [
-                h(
-                    "button",
-                    {
-                        class: "btn btn-sm btn-icon btn-info",
-                        onClick: () => {
-                            selected.value = cell.getValue();
-                            openForm.value = true;
-                        },
-                    },
-                    h("i", { class: "la la-pencil fs-2" })
-                ),
+                // h(
+                //     "button",
+                //     {
+                //         class: "btn btn-sm btn-icon btn-info",
+                //         onClick: () => {
+                //             selected.value = cell.getValue();
+                //             openForm.value = true;
+                //         },
+                //     },
+                //     h("i", { class: "la la-pencil fs-2" })
+                // ),
                 h(
                     "button",
                     {

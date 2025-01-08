@@ -21,13 +21,16 @@ const emit = defineEmits(["close", "refresh"]);
 
 const user = ref<User>({} as User);
 const formRef = ref();
+const kotaList = ref([]);
+const availableMobil = ref([]);
 const selectedMobilTarif = ref(null);
 
 const formSchema = Yup.object().shape({
+    kota_id: Yup.string().required("Kota harus dipilih"),
     mobil_id: Yup.string().required("Mobil harus diisi"),
     tanggal_mulai: Yup.string().required("Tanggal Mulai harus diisi"),
     tanggal_selesai: Yup.string().required("Tanggal Selesai harus diisi"),
-    jam_mulai: Yup.string().required("Jam Mulai harus diisi"),
+    // jam_mulai: Yup.string().required("Jam Mulai harus diisi"),
     status: Yup.string().required("Status Mobil harus diisi"),
     rental_option: Yup.string().required("Opsi harus diisi"),
 });
@@ -62,10 +65,56 @@ async function getMobilTarif(mobilId: string) {
     }
 }
 
+async function getKotaList() {
+    try {
+        const response = await ApiService.get('kota/get');
+        kotaList.value = response.data.data.map((kota: any) => ({
+            id: kota.id,
+            text: kota.nama
+        }));
+    } catch (err: any) {
+        toast.error("Gagal mengambil data kota");
+    }
+}
 
-function submit() {
+// Fetch mobil berdasarkan kota
+async function getMobilByKota(kotaId: string) {
+    if (!kotaId) return;
+
+    try {
+        const response = await ApiService.get(`mobil/getkota/${kotaId}`);
+        availableMobil.value = response.data.data;
+
+        // Reset mobil selection when changing kota
+        user.value.mobil_id = null;
+        user.value.total_biaya = null;
+    } catch (err: any) {
+        toast.error("Gagal mengambil data mobil");
+    }
+}
+
+// Update tarif when mobil is selected
+watch(() => user.value.mobil_id, (newMobilId) => {
+    if (newMobilId) {
+        const selectedMobil = availableMobil.value.find(m => m.id === newMobilId);
+        if (selectedMobil) {
+            user.value.total_biaya = selectedMobil.tarif;
+        }
+    }
+});
+
+// Watch kota changes
+watch(() => user.value.kota_id, (newKotaId) => {
+    if (newKotaId) {
+        getMobilByKota(newKotaId);
+    }
+});
+
+
+async function submit() {
     const formData = new FormData();
     formData.append("mobil_id", user.value.mobil_id);
+    formData.append("kota_id", user.value.kota_id);
     formData.append("delivery_id", user.value.delivery_id);
     formData.append("tanggal_mulai", user.value.tanggal_mulai);
     formData.append("tanggal_selesai", user.value.tanggal_selesai);
@@ -78,6 +127,7 @@ function submit() {
     if (props.selected) {
         formData.append("_method", "PUT");
     }
+
     block(document.getElementById("form-user"));
     axios({
         method: "post",
@@ -141,13 +191,12 @@ const totalBiayaFormat = computed({
 });
 
 onMounted(async () => {
+    await getKotaList();
     if (props.selected) {
         getEdit();
     }
-
     user.value.tanggal_mulai = dayjs().toISOString().slice(0, 10);
 });
-
 watch(() => user.value.mobil_id, async (newMobilId) => {
     if (newMobilId) {
         await getMobilTarif(newMobilId);
@@ -179,15 +228,34 @@ watch(
         </div>
         <div class="card-body">
             <div class="row">
+                <!-- Pilih Kota -->
+                <div class="col-md-6">
+                    <div class="fv-row mb-7">
+                        <label class="form-label fw-bold fs-6 required">
+                            Pilih Kota
+                        </label>
+                        <Field name="kota_id" type="hidden" v-model="user.kota_id">
+                            <select2 placeholder="Pilih Kota" class="form-select-solid" :options="kotaList"
+                                name="kota_id" v-model="user.kota_id">
+                            </select2>
+                        </Field>
+                        <div class="fv-plugins-message-container">
+                            <div class="fv-help-block">
+                                <ErrorMessage name="kota_id" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
+                <!-- Pilih Mobil -->
                 <div class="col-md-6">
                     <div class="fv-row mb-7">
                         <label class="form-label fw-bold fs-6 required">
                             Pilih Mobil
                         </label>
                         <Field name="mobil_id" type="hidden" v-model="user.mobil_id">
-                            <select2 placeholder="Pilih Mobil" class="form-select-solid" :options="mobil"
-                                name="mobil_id" v-model="user.mobil_id">
+                            <select2 placeholder="Pilih Mobil" class="form-select-solid" :options="availableMobil"
+                                name="mobil_id" v-model="user.mobil_id" :disabled="!user.kota_id">
                             </select2>
                         </Field>
                         <div class="fv-plugins-message-container">
@@ -252,8 +320,7 @@ watch(
                                 enableTime: true,
                                 noCalendar: true,
                                 format: 'H:i'
-                            }" class="form-select-solid" name="jam_mulai"
-                                v-model="user.jam_mulai" />
+                            }" class="form-select-solid" name="jam_mulai" v-model="user.jam_mulai" />
                         </Field>
                         <div class="fv-plugins-message-container">
                             <div class="fv-help-block">

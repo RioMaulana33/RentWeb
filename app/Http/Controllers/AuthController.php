@@ -312,5 +312,158 @@ class AuthController extends Controller
             'message' => 'Password admin berhasil direset.'
         ]);
     }
+
+
+    public function sendUserOTP(Request $request)
+{
+    $validator = Validator::make($request->all(), [
+        'email' => 'required|email'
+    ]);
+
+    if ($validator->fails()) {
+        return response()->json([
+            'status' => false,
+            'message' => $validator->errors()->first()
+        ], 422);
+    }
+
+    // Check if user exists
+    $user = User::where('email', $request->email)->first();
+    if (!$user) {
+        return response()->json([
+            'status' => false,
+            'message' => 'Email tidak terdaftar dalam sistem.'
+        ], 404);
+    }
+
+    // Generate OTP code (6 digits)
+    $otpCode = sprintf("%06d", mt_rand(1, 999999));
+    
+    // Save OTP to user record
+    $user->verification_code = $otpCode;
+    $user->token_expired_at = now()->addMinutes(15);
+    $user->save();
+
+    // Send email using Brevo/Sendinblue
+    $response = Http::withHeaders([
+        'api-key' => env('SENDINBLUE_API_KEY'),
+        "Content-Type" => "application/json"
+    ])->post('https://api.brevo.com/v3/smtp/email', [
+        "sender" => [
+            "name" => env('SENDINBLUE_SENDER_NAME'),
+            "email" => env('SENDINBLUE_SENDER_EMAIL'),
+        ],
+        'to' => [
+            [ 'email' => $request->email ]
+        ],
+        "subject" => "Kode OTP Reset Password",
+        "htmlContent" => "
+            <html>
+            <body>
+                <h1>Kode OTP Reset Password</h1>
+                <p>Anda telah meminta untuk mereset password akun Anda.</p>
+                <p>Kode OTP Anda adalah:</p>
+                <h2 style='font-size: 24px; 
+                          background-color: #f0f0f0; 
+                          padding: 10px; 
+                          text-align: center; 
+                          letter-spacing: 5px;'>
+                    {$otpCode}
+                </h2>
+                <p>Kode OTP ini akan kadaluarsa dalam 15 menit.</p>
+                <p>Jangan bagikan kode ini kepada siapapun.</p>
+                <p>Jika Anda tidak meminta reset password, abaikan email ini.</p>
+            </body>
+            </html>",
+    ]); 
+
+    if ($response->successful()) {
+        return response()->json([
+            'status' => true,
+            'message' => 'Kode OTP telah dikirim ke email Anda',
+        ], 200);
+    } else {
+        return response()->json([
+            'status' => false,
+            'message' => 'Gagal mengirim kode OTP',
+        ], 500);
+    }
+}
+
+public function verifyUserOTP(Request $request)
+{
+    $validator = Validator::make($request->all(), [
+        'email' => 'required|email',
+        'otp' => 'required|string|size:6',
+    ]);
+
+    if ($validator->fails()) {
+        return response()->json([
+            'status' => false,
+            'message' => $validator->errors()->first()
+        ], 422);
+    }
+
+    $user = User::where('email', $request->email)
+                ->where('verification_code', $request->otp)
+                ->where('token_expired_at', '>', now())
+                ->first();
+
+    if (!$user) {
+        return response()->json([
+            'status' => false,
+            'message' => 'Kode OTP tidak valid atau sudah kadaluarsa'
+        ], 400);
+    }
+
+    $user->email_verified_at = now();
+    $user->verification_code = null;
+    $user->save();
+
+    return response()->json([
+        'status' => true,
+        'message' => 'Verifikasi OTP berhasil'
+    ]);
+}
+
+public function resetUserPassword(Request $request)
+{
+    $validator = Validator::make($request->all(), [
+        'email' => 'required|email',
+        'password' => 'required|min:8|confirmed',
+    ]);
+
+    if ($validator->fails()) {
+        return response()->json([
+            'status' => false,
+            'message' => $validator->errors()->first()
+        ], 422);
+    }
+
+    $user = User::where('email', $request->email)->first();
+
+    if (!$user) {
+        return response()->json([
+            'status' => false,
+            'message' => 'User tidak ditemukan.'
+        ], 404);
+    }
+
+    // Check if email is verified
+    if (!$user->email_verified_at) {
+        return response()->json([
+            'status' => false,
+            'message' => 'Email belum diverifikasi. Silakan verifikasi OTP terlebih dahulu.'
+        ], 403);
+    }
+
+    $user->password = Hash::make($request->password);
+    $user->save();
+
+    return response()->json([
+        'status' => true,
+        'message' => 'Password berhasil direset.'
+    ]);
+}
   
 }
