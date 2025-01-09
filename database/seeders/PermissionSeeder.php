@@ -21,10 +21,12 @@ class PermissionSeeder extends Seeder
 
         $menuMaster = ['master', 'master-user', 'master-role', 'master-delivery', 'master-kota' ];
         $menuWebsite = ['website', 'setting','dashboard-penyewaan','dashboard-pembayaran','dashboard-laporan' ];
+        $menuAdminKota =['website','dashboard-penyewaan'];
         $menuMobil =['kelola-mobil','kelola-mobil-detail','kelola-mobil-stok'];
 
         $permissionsByRole = [
             'admin' => ['dashboard', ...$menuMaster, ...$menuWebsite, ...$menuMobil],
+            'admin-kota' => ['dashboard', ...$menuAdminKota, ...$menuMobil],
         ];
 
         $insertPermissions = fn ($role) => collect($permissionsByRole[$role])
@@ -43,7 +45,8 @@ class PermissionSeeder extends Seeder
             ->toArray();
 
         $permissionIdsByRole = [
-            'admin' => $insertPermissions('admin')
+            'admin' => $insertPermissions('admin'),
+            'admin-kota' => $insertPermissions('admin-kota')
         ];
 
         foreach ($permissionIdsByRole as $role => $permissionIds) {

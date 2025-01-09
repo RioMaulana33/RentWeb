@@ -20,6 +20,12 @@ class RoleSeeder extends Seeder
         ]);
 
         Role::create([
+            'name' => 'admin-kota',
+            'guard_name' => 'api',
+            'full_name' => 'Admin Kota',
+        ]);
+
+        Role::create([
             'name' => 'user',   
             'guard_name' => 'api',
             'full_name' => 'Customer',

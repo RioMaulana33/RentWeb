@@ -35,7 +35,7 @@
         Route::post('verify-otp', [AuthController::class, 'verifyOTP'])->withoutMiddleware('auth');
         Route::post('reset-password', [AuthController::class, 'resetPassword'])->withoutMiddleware('auth');
 
-        //MOBILE
+        //API FOR MOBILE
         Route::post('change-password', [UserController::class, 'changePassword'])->withoutMiddleware('auth'); //ganti password dalam akun
         Route::post('send-user-otp', [AuthController::class, 'sendUserOTP'])->withoutMiddleware('auth'); // otp ganti password
         Route::post('verify-user-otp', [AuthController::class, 'verifyUserOTP'])->withoutMiddleware('auth'); // verify otp

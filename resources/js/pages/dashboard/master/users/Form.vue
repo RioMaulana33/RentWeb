@@ -22,6 +22,8 @@ const fileTypes = ref(["image/jpeg", "image/png", "image/jpg"]);
 const photo = ref<any>([]);
 const formRef = ref();
 
+const isEditMode = computed(() => !!props.selected && props.selected !== '');
+
 const formSchema = Yup.object().shape({
     name: Yup.string().required("Nama harus diisi"),
     email: Yup.string()
@@ -157,6 +159,7 @@ watch(
                             autocomplete="off"
                             v-model="user.name"
                             placeholder="Masukkan Nama"
+                            :disabled="isEditMode"
                         />
                         <div class="fv-plugins-message-container">
                             <div class="fv-help-block">

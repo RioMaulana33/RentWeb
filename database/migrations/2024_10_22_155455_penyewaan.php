@@ -16,6 +16,7 @@ return new class extends Migration
             $table->uuid()->unique();
             $table->foreignId('user_id')->constrained('users')->restrictOnDelete();
             $table->foreignId('mobil_id')->nullable()->references('id')->on('mobil')->onDelete('cascade');
+            $table->foreignId('kota_id')->nullable()->references('id')->on('kota')->onDelete('cascade');
             $table->foreignId('delivery_id')->nullable()->refrences('id')->on('delivery')->onDelete('cascade');
             $table->date('tanggal_mulai')->nullable();
             $table->date('tanggal_selesai')->nullable();

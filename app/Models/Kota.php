@@ -18,5 +18,11 @@ class Kota extends Model
     {
         return $this->hasMany(StokMobil::class);
     }
+
+
+    public function penyewaan ()
+    {
+        return $this->hasMany(Penyewaan::class);
+    }
     
 }

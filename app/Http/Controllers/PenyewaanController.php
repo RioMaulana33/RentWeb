@@ -9,6 +9,8 @@ use App\Models\StokMobil;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+use App\Models\Kota;
 
 class PenyewaanController extends Controller
 {
@@ -16,18 +18,35 @@ class PenyewaanController extends Controller
     {
         $per = $request->per ?? 10;
         $page = $request->page ? $request->page - 1 : 0;
-
+        $adminUser = Auth::user();
+    
         DB::statement('set @no=0+' . $page * $per);
-        $data = Penyewaan::with(['mobil','delivery','user'])->when($request->search, function (Builder $query, string $search) {
-            $query->where('user_id', 'like', "%$search%")
-                ->orWhere('tanggal_mulai', 'like', "%$search%")
-                ->orWhereHas('mobil_id', function ($query) use ($search) {
-                    $query->where('', 'like', "%$search%");
-                });
-        })->latest()->paginate($per, ['*', DB::raw('@no := @no + 1 AS no')]);
-
-
-
+    
+        // Base query with relationships
+        $query = Penyewaan::with(['mobil', 'delivery', 'user', 'kota']);
+    
+        if ($adminUser->hasRole('admin-kota')) {
+            $kotaId = Kota::where('nama', $adminUser->name)->first()->id;
+            $query->where('kota_id', $kotaId);
+        }
+    
+        if ($request->search) {
+            $query->where(function ($query) use ($request) {
+                $search = $request->search;
+                $query->where('user_id', 'like', "%$search%")
+                    ->orWhere('tanggal_mulai', 'like', "%$search%")
+                    ->orWhereHas('mobil', function ($query) use ($search) {
+                        $query->where('nama', 'like', "%$search%");
+                    })
+                    ->orWhereHas('user', function ($query) use ($search) {
+                        $query->where('name', 'like', "%$search%");
+                    });
+            });
+        }
+    
+        $data = $query->latest()
+            ->paginate($per, ['*', DB::raw('@no := @no + 1 AS no')]);
+    
         return response()->json($data);
     }
 

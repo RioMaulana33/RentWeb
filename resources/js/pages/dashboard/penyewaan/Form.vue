@@ -103,6 +103,15 @@ watch(() => user.value.mobil_id, (newMobilId) => {
     }
 });
 
+const lastSelectedKotaId = ref(null);
+
+watch(() => user.value.kota_id, (newKotaId) => {
+    lastSelectedKotaId.value = newKotaId;
+    if (newKotaId) {
+        getMobilByKota(newKotaId);
+    }
+});
+
 // Watch kota changes
 watch(() => user.value.kota_id, (newKotaId) => {
     if (newKotaId) {
@@ -112,9 +121,10 @@ watch(() => user.value.kota_id, (newKotaId) => {
 
 
 async function submit() {
+    console.log('Submitting with kota_id:', user.value.kota_id);
     const formData = new FormData();
-    formData.append("mobil_id", user.value.mobil_id);
     formData.append("kota_id", user.value.kota_id);
+    formData.append("mobil_id", user.value.mobil_id);
     formData.append("delivery_id", user.value.delivery_id);
     formData.append("tanggal_mulai", user.value.tanggal_mulai);
     formData.append("tanggal_selesai", user.value.tanggal_selesai);
@@ -197,6 +207,7 @@ onMounted(async () => {
     }
     user.value.tanggal_mulai = dayjs().toISOString().slice(0, 10);
 });
+
 watch(() => user.value.mobil_id, async (newMobilId) => {
     if (newMobilId) {
         await getMobilTarif(newMobilId);
@@ -205,6 +216,12 @@ watch(() => user.value.mobil_id, async (newMobilId) => {
     }
 });
 
+watch(() => user.value.kota_id, (newKotaId, oldKotaId) => {
+    console.log('Kota ID changed:', { old: oldKotaId, new: newKotaId });
+    if (newKotaId) {
+        getMobilByKota(newKotaId);
+    }
+}, { immediate: true });
 
 watch(
     () => props.selected,
@@ -236,7 +253,8 @@ watch(
                         </label>
                         <Field name="kota_id" type="hidden" v-model="user.kota_id">
                             <select2 placeholder="Pilih Kota" class="form-select-solid" :options="kotaList"
-                                name="kota_id" v-model="user.kota_id">
+                                name="kota_id" v-model="user.kota_id"
+                                @change="(val) => console.log('Select2 changed:', val)">
                             </select2>
                         </Field>
                         <div class="fv-plugins-message-container">
