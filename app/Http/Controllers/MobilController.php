@@ -41,22 +41,14 @@ class MobilController extends Controller
     public function getMobilByKota($kota_id)
     {
         try {
-            $availableMobil = StokMobil::with(['mobil'])
+            $data = StokMobil::with(['mobil', 'kota'])
                 ->where('kota_id', $kota_id)
                 ->where('stok', '>', 0)
-                ->get()
-                ->map(function ($stok) {
-                    return [
-                        'id' => $stok->mobil->id,
-                        'text' => "{$stok->mobil->merk} {$stok->mobil->model} (Stok: {$stok->stok})",
-                        'stok' => $stok->stok,
-                        'tarif' => $stok->mobil->tarif
-                    ];
-                });
-
+                ->get();
+    
             return response()->json([
                 'status' => true,
-                'data' => $availableMobil
+                'data' => $data
             ]);
         } catch (\Exception $e) {
             return response()->json([

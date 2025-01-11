@@ -83,11 +83,12 @@ async function getMobilByKota(kotaId: string) {
 
     try {
         const response = await ApiService.get(`mobil/getkota/${kotaId}`);
-        availableMobil.value = response.data.data;
+        // Transform data untuk format select2
+        availableMobil.value = response.data.data.map((item: any) => ({
+            id: item.mobil.id,
+            text: `${item.mobil.merk} ${item.mobil.model} (Stok: ${item.stok})`
+        }));
 
-        // Reset mobil selection when changing kota
-        user.value.mobil_id = null;
-        user.value.total_biaya = null;
     } catch (err: any) {
         toast.error("Gagal mengambil data mobil");
     }
@@ -96,9 +97,9 @@ async function getMobilByKota(kotaId: string) {
 // Update tarif when mobil is selected
 watch(() => user.value.mobil_id, (newMobilId) => {
     if (newMobilId) {
-        const selectedMobil = availableMobil.value.find(m => m.id === newMobilId);
+        const selectedMobil = response.data.data.find(m => m.mobil.id === newMobilId);
         if (selectedMobil) {
-            user.value.total_biaya = selectedMobil.tarif;
+            user.value.total_biaya = selectedMobil.mobil.tarif;
         }
     }
 });

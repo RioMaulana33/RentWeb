@@ -8,6 +8,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use PHPOpenSourceSaver\JWTAuth\Exceptions\JWTException;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use Spatie\Permission\Traits\HasRoles;
 use Spatie\Permission\Models\Role;
@@ -58,12 +59,11 @@ class AuthController extends Controller
         ]);
     }
 
-    public function register(Request $request)
+    public function initializeRegistration(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
-            'password' => 'required|min:8|confirmed',
         ]);
 
         if ($validator->fails()) {
@@ -74,16 +74,146 @@ class AuthController extends Controller
         }
 
         try {
-            // Create new user
-            $user = User::create([
+            // Generate and store OTP
+            $otpCode = sprintf("%06d", mt_rand(1, 999999));
+            $cacheKey = 'registration_' . $request->email;
+
+            Cache::put($cacheKey, [
                 'name' => $request->name,
                 'email' => $request->email,
-                'password' => Hash::make($request->password),
+                'verification_code' => $otpCode,
+                'token_expired_at' => now()->addMinutes(2)
+            ], now()->addMinutes(2));
+
+            // Send OTP email
+            $response = Http::withHeaders([
+                'api-key' => env('SENDINBLUE_API_KEY'),
+                "Content-Type" => "application/json"
+            ])->post('https://api.brevo.com/v3/smtp/email', [
+                "sender" => [
+                    "name" => env('SENDINBLUE_SENDER_NAME'),
+                    "email" => env('SENDINBLUE_SENDER_EMAIL'),
+                ],
+                'to' => [
+                    ['email' => $request->email]
+                ],
+                "subject" => "Verifikasi Email Registrasi",
+                "htmlContent" => "
+                <html>
+                <body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333333; margin: 0; padding: 20px;'>
+                    <div style='max-width: 500px; margin: 0 auto;'>
+                        <h1 style='color: #2c5282; font-size: 22px; margin-bottom: 20px;'>Verifikasi Email</h1>
+                        
+                        <p style='margin-bottom: 25px;'>Terima kasih telah mendaftar. Untuk mengaktifkan akun Anda, masukkan kode OTP berikut:</p>
+                        
+                        <div style='background-color: #f7fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 20px; text-align: center; margin-bottom: 25px;'>
+                            <div style='color: #2c5282; font-size: 28px; font-weight: bold; letter-spacing: 4px;'>{$otpCode}</div>
+                        </div>
+                        
+                        <p style='color: #4a5568; font-size: 14px; margin-bottom: 15px;'>Kode OTP ini akan kadaluarsa dalam 2 menit.</p>
+                    </div>
+                </body>
+                </html>"
             ]);
 
-            // Assign role 'user' to the newly created user
+            if (!$response->successful()) {
+                throw new \Exception('Gagal mengirim kode OTP verifikasi');
+            }
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Kode OTP telah dikirim ke email Anda.'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Gagal memulai proses registrasi: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // Step 2: Verify OTP
+    public function verifyRegistrationOTP(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email',
+            'otp' => 'required|string|size:6',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => $validator->errors()->first()
+            ], 422);
+        }
+
+        $cacheKey = 'registration_' . $request->email;
+        $tempRegistration = Cache::get($cacheKey);
+    
+        if (!$tempRegistration || 
+            $tempRegistration['verification_code'] !== $request->otp ||
+            now()->isAfter($tempRegistration['token_expired_at'])) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Kode OTP tidak valid atau sudah kadaluarsa'
+            ], 400);
+        }
+    
+        Cache::put($cacheKey, [
+            'name' => $tempRegistration['name'],
+            'email' => $tempRegistration['email'],
+            'is_verified' => true
+        ], now()->addMinutes(30));
+    
+        return response()->json([
+            'status' => true,
+            'message' => 'Verifikasi OTP berhasil'
+        ]);
+    }
+
+    // Step 3: Complete registration
+    public function completeRegistration(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'phone' => 'required|string|min:10',
+            'password' => 'required|min:8',
+            'password_confirmation' => 'required|same:password',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => $validator->errors()->first()
+            ], 422);
+        }
+
+        $cacheKey = 'registration_' . $request->email;
+    $tempRegistration = Cache::get($cacheKey);
+
+    if (!$tempRegistration) {
+        return response()->json([
+            'status' => false,
+            'message' => 'Data registrasi tidak ditemukan'
+        ], 400);
+    }
+
+        try {
+            // Create the user
+            $user = User::create([
+                'name' => $tempRegistration['name'],
+                'email' => $tempRegistration['email'],
+                'phone' => $request->phone,
+                'password' => bcrypt($request->password),
+                'email_verified_at' => now(),
+            ]);
+
+            // Assign default role
             $user->assignRole('user');
 
+            // Clear temporary registration data
+            Cache::forget($cacheKey);
+
+            // Generate JWT token
             $token = auth()->login($user);
 
             return response()->json([
@@ -99,6 +229,80 @@ class AuthController extends Controller
             ], 500);
         }
     }
+
+    public function resendRegistrationOTP(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => $validator->errors()->first()
+            ], 422);
+        }
+
+        $tempRegistration = session('temp_registration');
+
+        if (!$tempRegistration || $tempRegistration['email'] !== $request->email) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Data registrasi tidak ditemukan'
+            ], 404);
+        }
+
+        // Generate new OTP and update session
+        $otpCode = sprintf("%06d", mt_rand(1, 999999));
+        $tempRegistration['verification_code'] = $otpCode;
+        $tempRegistration['token_expired_at'] = now()->addMinutes(2);
+
+        session(['temp_registration' => $tempRegistration]);
+
+        // Send new OTP email
+        $response = Http::withHeaders([
+            'api-key' => env('SENDINBLUE_API_KEY'),
+            "Content-Type" => "application/json"
+        ])->post('https://api.brevo.com/v3/smtp/email', [
+            "sender" => [
+                "name" => env('SENDINBLUE_SENDER_NAME'),
+                "email" => env('SENDINBLUE_SENDER_EMAIL'),
+            ],
+            'to' => [
+                ['email' => $request->email]
+            ],
+            "subject" => "Verifikasi Email Registrasi",
+            "htmlContent" => "
+            <html>
+            <body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333333; margin: 0; padding: 20px;'>
+                <div style='max-width: 500px; margin: 0 auto;'>
+                    <h1 style='color: #2c5282; font-size: 22px; margin-bottom: 20px;'>Verifikasi Email</h1>
+                    
+                    <p style='margin-bottom: 25px;'>Berikut adalah kode OTP baru Anda:</p>
+                    
+                    <div style='background-color: #f7fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 20px; text-align: center; margin-bottom: 25px;'>
+                        <div style='color: #2c5282; font-size: 28px; font-weight: bold; letter-spacing: 4px;'>{$otpCode}</div>
+                    </div>
+                    
+                    <p style='color: #4a5568; font-size: 14px; margin-bottom: 15px;'>Kode OTP ini akan kadaluarsa dalam 2 menit.</p>
+                </div>
+            </body>
+            </html>"
+        ]);
+
+        if ($response->successful()) {
+            return response()->json([
+                'status' => true,
+                'message' => 'Kode OTP baru telah dikirim'
+            ]);
+        } else {
+            return response()->json([
+                'status' => false,
+                'message' => 'Gagal mengirim kode OTP baru'
+            ], 500);
+        }
+    }
+
     public function logout()
     {
         try {
