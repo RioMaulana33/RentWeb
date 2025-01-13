@@ -34,16 +34,29 @@ class UserController extends Controller
     public function index(Request $request)
     {
         $per = $request->per ?? 10;
-        $page = $request->page ? $request->page - 1 : 0;
-
-        DB::statement('set @no=0+' . $page * $per);
-        $data = User::when($request->search, function (Builder $query, string $search) {
-            $query->where('name', 'like', "%$search%")
-                ->orWhere('email', 'like', "%$search%")
-                ->orWhere('verify_ktp', 'like', "%$search%")
-                ->orWhere('phone', 'like', "%$search%");
-        })->latest()->paginate($per, ['*', DB::raw('@no := @no + 1 AS no')]);
-
+    
+        $query = User::with('roles')
+            ->when($request->search, function (Builder $query, string $search) {
+                $query->where('name', 'like', "%$search%")
+                    ->orWhere('email', 'like', "%$search%")
+                    ->orWhere('verify_ktp', 'like', "%$search%")
+                    ->orWhere('phone', 'like', "%$search%");
+            });
+    
+        // Filter based on role
+        if ($request->role_filter === 'admin') {
+            $query->whereHas('roles', function($q) {
+                $q->whereIn('name', ['admin', 'admin-kota']);
+            });
+        } else if ($request->role_filter === 'user') {
+            $query->whereHas('roles', function($q) {
+                $q->where('name', 'user');
+            });
+        }
+    
+        $query->selectRaw('*, ROW_NUMBER() OVER(ORDER BY created_at DESC) as no');
+        $data = $query->paginate($per);
+    
         return response()->json($data);
     }
 
@@ -112,7 +125,7 @@ class UserController extends Controller
 
     public function updateMobile(Request $request)
     {
-      
+
         $data = $request->only('name', 'phone', 'photo');
 
         if ($request->hasFile('photo')) {
@@ -133,18 +146,18 @@ class UserController extends Controller
         $validator = Validator::make($request->all(), [
             'password' => 'required|min:8|confirmed',
         ]);
-    
+
         if ($validator->fails()) {
             return response()->json([
                 'status' => false,
                 'message' => $validator->errors()->first()
             ], 422);
         }
-    
+
         $user = $request->user();
         $user->password = Hash::make($request->password);
         $user->save();
-    
+
         return response()->json([
             'status' => true,
             'message' => 'Password berhasil diubah.'

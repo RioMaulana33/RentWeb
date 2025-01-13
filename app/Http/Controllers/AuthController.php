@@ -149,22 +149,24 @@ class AuthController extends Controller
 
         $cacheKey = 'registration_' . $request->email;
         $tempRegistration = Cache::get($cacheKey);
-    
-        if (!$tempRegistration || 
+
+        if (
+            !$tempRegistration ||
             $tempRegistration['verification_code'] !== $request->otp ||
-            now()->isAfter($tempRegistration['token_expired_at'])) {
+            now()->isAfter($tempRegistration['token_expired_at'])
+        ) {
             return response()->json([
                 'status' => false,
                 'message' => 'Kode OTP tidak valid atau sudah kadaluarsa'
             ], 400);
         }
-    
+
         Cache::put($cacheKey, [
             'name' => $tempRegistration['name'],
             'email' => $tempRegistration['email'],
             'is_verified' => true
         ], now()->addMinutes(30));
-    
+
         return response()->json([
             'status' => true,
             'message' => 'Verifikasi OTP berhasil'
@@ -188,14 +190,14 @@ class AuthController extends Controller
         }
 
         $cacheKey = 'registration_' . $request->email;
-    $tempRegistration = Cache::get($cacheKey);
+        $tempRegistration = Cache::get($cacheKey);
 
-    if (!$tempRegistration) {
-        return response()->json([
-            'status' => false,
-            'message' => 'Data registrasi tidak ditemukan'
-        ], 400);
-    }
+        if (!$tempRegistration) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Data registrasi tidak ditemukan'
+            ], 400);
+        }
 
         try {
             // Create the user
@@ -233,6 +235,7 @@ class AuthController extends Controller
     public function resendRegistrationOTP(Request $request)
     {
         $validator = Validator::make($request->all(), [
+            'name' => 'required|string',
             'email' => 'required|email'
         ]);
 
@@ -243,9 +246,11 @@ class AuthController extends Controller
             ], 422);
         }
 
-        $tempRegistration = session('temp_registration');
+        $cacheKey = 'registration_' . $request->email;
+        $tempRegistration = Cache::get($cacheKey);
 
-        if (!$tempRegistration || $tempRegistration['email'] !== $request->email) {
+
+        if (!$tempRegistration) {
             return response()->json([
                 'status' => false,
                 'message' => 'Data registrasi tidak ditemukan'
@@ -254,10 +259,14 @@ class AuthController extends Controller
 
         // Generate new OTP and update session
         $otpCode = sprintf("%06d", mt_rand(1, 999999));
-        $tempRegistration['verification_code'] = $otpCode;
-        $tempRegistration['token_expired_at'] = now()->addMinutes(2);
 
-        session(['temp_registration' => $tempRegistration]);
+        // Update cache dengan OTP baru
+        Cache::put($cacheKey, [
+            'name' => $tempRegistration['name'],
+            'email' => $tempRegistration['email'],
+            'verification_code' => $otpCode,
+            'token_expired_at' => now()->addMinutes(2)
+        ], now()->addMinutes(2));
 
         // Send new OTP email
         $response = Http::withHeaders([
@@ -520,6 +529,38 @@ class AuthController extends Controller
         ]);
     }
 
+    public function formPassword(Request $request)
+{
+    $validator = Validator::make($request->all(), [
+        'uuid' => 'required|exists:users,uuid',
+        'password' => 'required|min:8|confirmed',
+    ]);
+
+    if ($validator->fails()) {
+        return response()->json([
+            'status' => false,
+            'message' => $validator->errors()->first(),
+            'errors' => $validator->errors()
+        ], 422);
+    }
+
+    try {
+        $user = User::where('uuid', $request->uuid)->first();
+        $user->password = Hash::make($request->password);
+        $user->save();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Password berhasil diubah'
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => false,
+            'message' => 'Gagal mengubah password: ' . $e->getMessage()
+        ], 500);
+    }
+}
+
 
     public function sendUserOTP(Request $request)
     {
@@ -534,7 +575,6 @@ class AuthController extends Controller
             ], 422);
         }
 
-        // Check if user exists
         $user = User::where('email', $request->email)->first();
         if (!$user) {
             return response()->json([
@@ -551,7 +591,6 @@ class AuthController extends Controller
         $user->token_expired_at = now()->addMinutes(2);
         $user->save();
 
-        // Send email using Brevo/Sendinblue
         $response = Http::withHeaders([
             'api-key' => env('SENDINBLUE_API_KEY'),
             "Content-Type" => "application/json"

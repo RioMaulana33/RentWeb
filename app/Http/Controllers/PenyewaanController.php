@@ -8,6 +8,7 @@ use App\Models\StokMobil;
 
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Kota;
@@ -87,9 +88,19 @@ class PenyewaanController extends Controller
         ];
     }
 
+    private function generaeKodePenyewaan()
+    {
+        do{
+            $code = strtoupper(Str::random(3) . rand(100, 999));
+
+            $exist = Penyewaan::where('kode_penyewaan', $code)->exists();
+        } while ($exist);
+
+        return $code;
+    }
+
     public function add(Request $request)
     {
-        // Validasi data yang diterima
         $validated = $request->validate([
             'mobil_id' => 'required|integer',
             'delivery_id' => 'required|integer',
@@ -118,6 +129,8 @@ class PenyewaanController extends Controller
             ], 422);
         }
 
+        $validated['kode_penyewaan'] = $this->generateKodePenyewaan();
+        
         // Tambahkan user_id ke data yang akan disimpan
         $validated['user_id'] = auth()->id();
         
@@ -129,7 +142,6 @@ class PenyewaanController extends Controller
             'data' => $penyewaan,
         ]);
     }
-
     
 
     public function edit($uuid)
@@ -145,8 +157,6 @@ class PenyewaanController extends Controller
     {
         return response()->json(['data' => Penyewaan::all()]);
     }
-
-
 
     public function update($uuid, Request $request)
     {

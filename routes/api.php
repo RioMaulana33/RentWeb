@@ -34,6 +34,8 @@
         Route::post('send-mail-admin', [AuthController::class, 'mailAdmin'])->withoutMiddleware('auth');
         Route::post('verify-otp', [AuthController::class, 'verifyOTP'])->withoutMiddleware('auth');
         Route::post('reset-password', [AuthController::class, 'resetPassword'])->withoutMiddleware('auth');
+        Route::post('form-password', [AuthController::class, 'formPassword'])->withoutMiddleware('auth');
+
 
         //API FOR MOBILE
         Route::post('change-password', [UserController::class, 'changePassword'])->withoutMiddleware('auth'); //ganti password dalam akun
