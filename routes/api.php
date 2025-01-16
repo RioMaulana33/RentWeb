@@ -49,6 +49,7 @@
 
         Route::prefix('user')->group(function () {
             Route::post('update', [UserController::class, 'updateMobile'])->withoutMiddleware('auth');
+            Route::post('verify-document', [UserController::class, 'verifyDocument'])->withoutMiddleware('auth');
         });
     });
 
@@ -119,11 +120,12 @@
         });
         Route::prefix('penyewaan')->group(function () {
             Route::get('/get', [PenyewaanController::class, 'get']);
-            Route::get('/penyewaan/get/{uuid}', [PenyewaanController::class, 'get']);
+            Route::get('/penyewaan/detail/{uuid}', [PenyewaanController::class, 'detail']);
             Route::post('', [PenyewaanController::class, 'index']);
             Route::post('/store', [PenyewaanController::class, 'add'])->middleware('auth');
             Route::get('/penyewaan/edit/{uuid}', [PenyewaanController::class, 'edit']);
             Route::put('/penyewaan/update/{uuid}', [PenyewaanController::class, 'update']);
+            Route::post('/click-aktif/update/{uuid}', [PenyewaanController::class, 'clickAktif']);
             Route::delete('/penyewaan/destroy/{uuid}', [PenyewaanController::class, 'destroy']);
         });
     });

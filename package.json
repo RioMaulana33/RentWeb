@@ -29,6 +29,7 @@
         "ckeditor5-custom-build": "file:ckeditor",
         "clipboard": "^2.0.6",
         "core-js": "^3.8.3",
+        "date-fns": "^4.1.0",
         "deepmerge": "^4.2.2",
         "element-plus": "^2.2.4",
         "filepond": "^4.30.6",

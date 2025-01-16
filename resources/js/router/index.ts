@@ -48,15 +48,16 @@ const routes: Array<RouteRecordRaw> = [
             },
 
             {
-                path: "/dashboard/penyewaan",
-                name: "dashboard.penyewaan",
-                component: () =>
-                    import("@/pages/dashboard/penyewaan/Index.vue"),
+                path: "/dashboard/penyewaan/detail/:uuid",
+                name: "dashboard.penyewaan.detail",
+                component: () => 
+                    import('@/pages/dashboard/penyewaan/Detail.vue'),
                 meta: {
-                    pageTitle: "Penyewaan",
-                    breadcrumbs: ["Penyewaan"],
+                    pageTitle: "Detail Penyewaan",
+                    breadcrumbs: ["Penyewaan","Detail"],
                 },
             },
+
 
             {
                 path: "/dashboard/pembayaran",
@@ -235,15 +236,15 @@ const routes: Array<RouteRecordRaw> = [
         redirect: "/404",
     },
 
-     //LANDING
-     {
+    //LANDING
+    {
         path: "/landing/",
         name: "landing",
         component: () =>
             import("@/pages/landing/Landing.vue")
     },
-     {
-        path: "/landing/syarat-ketentuan",  
+    {
+        path: "/landing/syarat-ketentuan",
         name: "syarat-ketentuan",
         component: () =>
             import("@/pages/landing/Syarat.vue")

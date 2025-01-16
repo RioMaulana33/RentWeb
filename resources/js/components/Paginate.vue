@@ -174,6 +174,7 @@ export default defineComponent({
         }
     },
     computed: {
+
         pagination() {
             let limit = this.data?.last_page <= this.page + 1 ? 5 : 2;
             return Array.from({ length: this.data?.last_page }, (_, i) => i + 1).filter(

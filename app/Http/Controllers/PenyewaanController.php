@@ -8,6 +8,9 @@ use App\Models\StokMobil;
 
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Database\Eloquent\Builder;
+use Carbon\Carbon;
+use App\Helpers\RentalHelper;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -23,7 +26,6 @@ class PenyewaanController extends Controller
     
         DB::statement('set @no=0+' . $page * $per);
     
-        // Base query with relationships
         $query = Penyewaan::with(['mobil', 'delivery', 'user', 'kota']);
     
         if ($adminUser->hasRole('admin-kota')) {
@@ -33,14 +35,17 @@ class PenyewaanController extends Controller
     
         if ($request->search) {
             $query->where(function ($query) use ($request) {
-                $search = $request->search;
-                $query->where('user_id', 'like', "%$search%")
-                    ->orWhere('tanggal_mulai', 'like', "%$search%")
-                    ->orWhereHas('mobil', function ($query) use ($search) {
-                        $query->where('nama', 'like', "%$search%");
+                $search = '%' . $request->search . '%';
+                $query->where('user_id', 'like', $search)
+                    ->orWhere('tanggal_mulai', 'like', $search)
+                    ->orWhere('kode_penyewaan', 'like', $search)
+                    ->orWhere('jam_mulai', 'like', $search)
+                    ->orWhere('status', 'like', $search)
+                    ->orWhereHas('mobil', function ($q) use ($search) {
+                        $q->where('merk', 'like', $search); // Sesuaikan dengan nama kolom yang benar
                     })
-                    ->orWhereHas('user', function ($query) use ($search) {
-                        $query->where('name', 'like', "%$search%");
+                    ->orWhereHas('user', function ($q) use ($search) {
+                        $q->where('email', 'like', $search);
                     });
             });
         }
@@ -88,7 +93,7 @@ class PenyewaanController extends Controller
         ];
     }
 
-    private function generaeKodePenyewaan()
+    private function generateKodePenyewaan()
     {
         do{
             $code = strtoupper(Str::random(3) . rand(100, 999));
@@ -99,6 +104,7 @@ class PenyewaanController extends Controller
         return $code;
     }
 
+   
     public function add(Request $request)
     {
         $validated = $request->validate([
@@ -113,6 +119,9 @@ class PenyewaanController extends Controller
             'total_biaya' => 'required|numeric',
             'alamat_pengantaran' => 'nullable|string',
         ]);
+
+        // Set initial status to pending
+        $validated['status'] = 'pending';
 
         // Cek ketersediaan mobil
         $availability = $this->checkAvailability(
@@ -130,8 +139,6 @@ class PenyewaanController extends Controller
         }
 
         $validated['kode_penyewaan'] = $this->generateKodePenyewaan();
-        
-        // Tambahkan user_id ke data yang akan disimpan
         $validated['user_id'] = auth()->id();
         
         $penyewaan = Penyewaan::create($validated);
@@ -153,6 +160,15 @@ class PenyewaanController extends Controller
         ], 200);
     }
 
+    public function detail($uuid)
+    {
+        $base = Penyewaan::where('uuid', $uuid)->with(['user', 'Mobil', 'Kota'])->first();
+        return response()->json([
+            'success' => true,
+            'data' => $base
+        ]); 
+    }
+
     public function get()
     {
         return response()->json(['data' => Penyewaan::all()]);
@@ -169,7 +185,7 @@ class PenyewaanController extends Controller
           'tanggal_mulai' => 'required|date',
           'tanggal_selesai' => 'required|date',
           'rental_option' => 'required|string',
-          'status' => 'required|string',
+          'status' => 'required|in:aktif,pending,selesai',
         ]);
     
         // Update data umum
@@ -177,7 +193,7 @@ class PenyewaanController extends Controller
             'tanggal_mulai',
             'tanggal_selesai',
             'rental_option',
-            'status',
+            'status' ,
             'total_biaya',
             'alamat_pengantaran',
             'mobil_id',
@@ -188,6 +204,28 @@ class PenyewaanController extends Controller
         return response()->json([
             'status' => 'true',
             'message' => 'Data berhasil diubah'
+        ]);
+    }
+
+    public function clickAktif($uuid)
+    {
+        $base = Penyewaan::findByUuid($uuid);
+
+        if (!$base) {
+            return response()->json([
+                'status' => 'false',
+                'message' => 'Penyewaan tidak ditemukan'
+            ], 404); // 404 Not Found
+        }
+
+        $base->update([
+            'status' => 'aktif',
+
+        ]);
+
+        return response()->json([
+            'status' => 'true',
+            'message' => 'Penyewaan berhasil di ubah'
         ]);
     }
     

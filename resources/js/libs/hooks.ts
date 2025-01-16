@@ -50,6 +50,49 @@ export const useDelete = (callback?: ICallback, swalMixin?: any) => {
                 }),
     };
 };
+    export const useclickAktif = (callback?: ICallback, swalMixin?: any) => {
+        const mySwal = Swal.mixin(
+            swalMixin || {
+                customClass: {
+                    confirmButton: "btn btn-primary btn-sm",
+                    cancelButton: "btn btn-secondary btn-sm",
+                },
+                buttonsStyling: false,
+            }
+        );
+        const { onSuccess, onError, onSettled } = callback || {};
+    
+        return {
+            clickAktif: (url: string) =>
+                mySwal
+                    .fire({
+                        title: "Mengubah Keaktifan Data",
+                        text: "Data yang telah di ubah tidak bisa di kembalikan!",
+                        icon: "info",
+                        showCancelButton: true,
+                        confirmButtonText: "Ya, Ubah",
+                        cancelButtonText: "Batalkan",
+                        reverseButtons: true,
+                        preConfirm: () => {
+                            return axios.post(url).catch((error) => {
+                                Swal.showValidationMessage(
+                                    error.response.data.message
+                                );
+                            });
+                        },
+                    })
+                    .then((result) => {
+                        if (result.isConfirmed) {
+                            mySwal.fire(
+                                "Berhasil!",
+                                result.value.data.message,
+                                "success"
+                            );
+                            onSuccess && onSuccess();
+                        }
+                    }),
+        };
+};
 
 export const useDownloadWord = (callback?: ICallback, swalMixin?: any) => {
     const mySwal = Swal.mixin(

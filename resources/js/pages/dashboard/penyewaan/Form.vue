@@ -375,7 +375,7 @@ watch(
                         </label>
                         <Field name="rental_option" type="hidden" v-model="user.rental_option">
                             <select2 placeholder="Pilih Rental Option" class="form-select-solid" :options="[
-                                { id: 'Dengan Kunci', text: 'Dengan Kunci' },
+                                { id: 'Dengan Supir', text: 'Dengan Supir' },
                                 { id: 'Lepas Kunci', text: 'Lepas Kunci' },
                             ]" name="rental_option" v-model="user.rental_option">
                             </select2>
@@ -395,9 +395,9 @@ watch(
                         </label>
                         <Field name="status" type="hidden" v-model="user.status">
                             <select2 placeholder="Pilih Status" class="form-select-solid" :options="[
-                                { id: 'Aktif', text: 'Aktif' },
-                                { id: 'Delay', text: 'Delay' },
-                                { id: 'Selesai', text: 'Selesai' },
+                                { id: 'aktif', text: 'aktif' },
+                                { id: 'pending', text: 'pending' },
+                                { id: 'selesai', text: 'selesai' },
                             ]" name="status" v-model="user.status">
                             </select2>
                         </Field>

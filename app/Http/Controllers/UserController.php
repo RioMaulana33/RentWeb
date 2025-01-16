@@ -164,6 +164,27 @@ class UserController extends Controller
         ]);
     }
 
+    public function verifyDocument(Request $request)
+{
+    $user = $request->user();
+    $data = [];
+
+    if ($request->hasFile('verify_ktp')) {
+        $data['verify_ktp'] = '/storage/' . $request->file('verify_ktp')->store('documents', 'public');
+    }
+    
+    if ($request->hasFile('verify_sim')) {
+        $data['verify_sim'] = '/storage/' . $request->file('verify_sim')->store('documents', 'public');
+    }
+
+    $user->update($data);
+
+    return response()->json([
+        'message' => 'Dokumen berhasil diunggah',
+        'data' => $user
+    ]);
+}
+
     /**
      * Remove the specified resource from storage.
      */

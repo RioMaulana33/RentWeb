@@ -42,9 +42,9 @@
 
         <!--begin::Forgot Password Link-->
         <div class="text-center mt-4">
-            <router-link to="/password-reset" class="link-primary fs-6 fw-bold">
+            <!-- <router-link to="/password-reset" class="link-primary fs-6 fw-bold">
                 Reset Password?
-            </router-link>
+            </router-link> -->
         </div>
         <!--end::Forgot Password Link-->
 

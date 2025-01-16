@@ -19,7 +19,17 @@ class MobilController extends Controller
 
         DB::statement('set @no=0+' . $page * $per);
         $data = Mobil::when($request->search, function (Builder $query, string $search) {
-            $query->where('merk', 'like', "%$search%");
+            $query->where('merk', 'like', "%$search%")
+                ->orWhere('tahun', 'like', "%$search%")
+                ->orWhere('model', 'like', "%$search%")
+                ->orWhere('type', 'like', "%$search%")
+                ->orWhere('tarif', 'like', "%$search%")
+                ->orWhere('kapasitas', 'like', "%$search%")
+                ->orWhere('bahan_bakar', 'like', "%$search%");
+              
+                
+
+
         })->latest()->paginate($per, ['*', DB::raw('@no := @no + 1 AS no')]);
 
         return response()->json($data);

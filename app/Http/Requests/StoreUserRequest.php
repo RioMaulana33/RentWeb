@@ -28,6 +28,7 @@ class StoreUserRequest extends FormRequest
             'password' => ['required', 'confirmed', Password::default()],
             'phone' => 'required|unique:users',
             'verify_ktp' => 'nullable',
+            'verify_sim' => 'nullable',
             'photo' => 'nullable|image',
             'role_id' => 'required'
         ];

@@ -579,7 +579,7 @@ class AuthController extends Controller
         if (!$user) {
             return response()->json([
                 'status' => false,
-                'message' => 'Email tidak terdaftar dalam sistem.'
+                'message' => 'Email tidak terdaftar dalam aplikasi.'
             ], 404);
         }
 
@@ -703,7 +703,7 @@ class AuthController extends Controller
             ], 403);
         }
 
-        $user->password = Hash::make($request->password);
+        $user->password = Hash::make($request->password);   
         $user->save();
 
         return response()->json([
