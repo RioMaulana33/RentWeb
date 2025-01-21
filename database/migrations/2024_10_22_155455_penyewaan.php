@@ -23,9 +23,11 @@ return new class extends Migration
             $table->date('tanggal_selesai')->nullable();    
             $table->string('jam_mulai')->nullable();
             $table->string('rental_option')->nullable();
-            $table->string('status')->nullable();
+            $table->enum('status',['pending', 'aktif', 'selesai'])->default('pending');
             $table->double('total_biaya')->nullable();
             $table->string('alamat_pengantaran')->nullable();
+            $table->timestamp('waktu_pengembalian_aktual')->nullable();
+            $table->decimal('denda', 12, 2)->default(0);
             $table->rememberToken();
             $table->timestamps();
         });

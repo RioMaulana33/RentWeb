@@ -15,7 +15,7 @@ class Delivery extends Model
     protected $fillable = [
         'nama',
         'deskripsi',
-        'cost',
+        'biaya',
     ];
 
 

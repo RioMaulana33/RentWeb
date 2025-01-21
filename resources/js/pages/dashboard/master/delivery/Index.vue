@@ -26,8 +26,8 @@ const columns = [
     column.accessor("deskripsi", {
         header: "Deskripsi",
     }),
-    column.accessor("cost", {
-        header: "Cost",
+    column.accessor("biaya", {
+        header: "Biaya",
         cell: (cell) => currency(cell.getValue(), { 
             style: "currency", 
             currency: "IDR", 

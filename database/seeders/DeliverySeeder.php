@@ -16,13 +16,13 @@ class DeliverySeeder extends Seeder
         Delivery::create([
           'nama' => 'Ambil Sendiri',
           'deskripsi' => 'Pelanggan datang langsung ke lokasi rental BluCarra untuk mengambil kendaraan yang telah dipesan',
-          'cost' => 0
+          'biaya' => 0
         ]);
 
         Delivery::create([
           'nama' => 'Layanan Jemput',
           'deskripsi' => 'Kendaraan diantarkan ke lokasi pelanggan oleh sopir BluCarra sesuai jadwal yang disepakati',
-          'cost' => 30000
+          'biaya' => 30000
         ]);
 
     

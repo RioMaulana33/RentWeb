@@ -48,6 +48,23 @@ class MobilController extends Controller
     //     ]);
     // }
 
+    public function getById($id)
+{
+    try {
+        $data = Mobil::with(['stokmobil.kota'])->findOrFail($id);
+        
+        return response()->json([
+            'status' => true,
+            'data' => $data
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => false,
+            'message' => 'Gagal mengambil data mobil: ' . $e->getMessage()
+        ], 500);
+    }
+}
+
     public function getMobilByKota($kota_id)
     {
         try {

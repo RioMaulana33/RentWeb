@@ -58,15 +58,16 @@ const getStatusBadge = (status: string) => {
                 <div class="d-flex flex-column">
                     <div class="d-flex align-items-center gap-3">
                         <span class="badge fs-7" :class="getStatusBadge(rental.status)">
-                                {{ rental.status.toUpperCase() }}
-                            </span>
+                            {{ rental.status.toUpperCase() }}
+                        </span>
                         <span class="text-gray-600">Kode: {{ rental.kode_penyewaan }}</span>
                     </div>
                 </div>
-                <button class="btn btn-light-danger btn-sm" @click="$router.back()">
-                    Kembali
-                    <i class="la la-times-circle fs-6" style="left: 3px;"></i>
-                    </button>
+
+                <button type="button" class="btn btn-sm btn-light-danger ms-auto" @click="$router.back()">
+                    Batal
+                    <i class="la la-times-circle p-0"></i>
+                </button>
             </div>
 
             <!-- Card Body -->
@@ -78,14 +79,14 @@ const getStatusBadge = (status: string) => {
                             <div class="card-body p-6">
                                 <h3 class="card-title  mb-4">
                                     <span class="symbol-label bg-success bg-opacity-10 rounded-1">
-                                    <i class="fas fa-user text-success p-3"></i>
-                                </span>
+                                        <i class="fas fa-user text-success p-3"></i>
+                                    </span>
                                     Informasi Customer
                                 </h3>
                                 <div class="ps-2">
                                     <div class="mb-4">
                                         <label class="text-gray-400 mb-1 d-block">Nama Customer</label>
-                                        <span class="">{{ rental.user?.name  }}</span>
+                                        <span class="">{{ rental.user?.name }}</span>
                                     </div>
                                     <div class="mb-4">
                                         <label class="text-gray-400 mb-1 d-block">Email</label>
@@ -106,20 +107,24 @@ const getStatusBadge = (status: string) => {
                             <div class="card-body p-6">
                                 <h3 class="card-title  mb-4">
                                     <span class="symbol-label bg-primary bg-opacity-10 rounded-3">
-                                    <i class="fas fa-car text-primary p-3"></i>
+                                        <i class="fas fa-car text-primary p-3"></i>
                                     </span>
                                     Informasi Kendaraan
                                 </h3>
                                 <div class="ps-2">
                                     <div class="mb-4">
-                                        <label class="text-gray-400 mb-1 d-block">Merk/Model</label>
-                                        <span class="">{{ rental.mobil?.merk  }}</span>
+                                        <label class="text-gray-400 mb-1 d-block">Merk</label>
+                                        <span class="">{{ rental.mobil?.merk }}</span>
+                                    </div>
+                                    <div class="mb-4">
+                                        <label class="text-gray-400 mb-1 d-block">Model</label>
+                                        <span class="">{{ rental.mobil?.model }}</span>
                                     </div>
                                     <div class="mb-4">
                                         <label class="text-gray-400 mb-1 d-block">Kota</label>
-                                        <span class="">{{ rental.kota?.nama}}</span>
+                                        <span class="">{{ rental.kota?.nama }}</span>
                                     </div>
-                                    
+
                                 </div>
                             </div>
                         </div>
@@ -132,7 +137,7 @@ const getStatusBadge = (status: string) => {
                                 <h3 class="card-title mb-4">
                                     <span class="symbol-label bg-info bg-opacity-10 rounded-3">
 
-                                    <i class="fas fa-calendar text-info p-3"></i>
+                                        <i class="fas fa-calendar text-info p-3"></i>
                                     </span>
                                     Detail Penyewaan
                                 </h3>
@@ -140,25 +145,29 @@ const getStatusBadge = (status: string) => {
                                     <div class="col-md-6">
                                         <div class="mb-4">
                                             <label class="text-gray-400 mb-1 d-block">Tanggal Mulai</label>
-                                            <span class="">{{ rental.tanggal_mulai  }}</span>
+                                            <span class="">{{ rental.tanggal_mulai }}</span>
                                         </div>
                                         <div class="mb-4">
                                             <label class="text-gray-400 mb-1 d-block">Tanggal Selesai</label>
-                                            <span class="">{{ rental.tanggal_selesai  }}</span>
+                                            <span class="">{{ rental.tanggal_selesai }}</span>
                                         </div>
                                         <div>
                                             <label class="text-gray-400 mb-1 d-block">Jam Mulai</label>
-                                            <span class="">{{ rental.jam_mulai  }}</span>
+                                            <span class="">{{ rental.jam_mulai }}</span>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
+                                        <div class="mb-4">
+                                            <label class="text-gray-400 mb-1 d-block">Delivery Option</label>
+                                            <span class="">{{ rental.delivery?.nama }}</span>
+                                        </div>
                                         <div class="mb-4">
                                             <label class="text-gray-400 mb-1 d-block">Rental Option</label>
                                             <span class="">{{ rental.rental_option }}</span>
                                         </div>
                                         <div>
                                             <label class="text-gray-400 mb-1 d-block">Total Biaya</label>
-                                            <span class="text-primary">{{ currency(rental.total_biaya , {
+                                            <span class="text-primary">{{ currency(rental.total_biaya, {
                                                 style: "currency",
                                                 currency: "IDR",
                                                 minimumFractionDigits: 0,

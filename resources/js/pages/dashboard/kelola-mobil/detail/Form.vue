@@ -112,9 +112,22 @@ const TarifFormat = computed({
     get: () => formatRupiah(mobil.value.tarif),
     set: (newValue) => {
         // Remove non-numeric characters
-        mobil.value.tarif = newValue.replace(/[^0-9]/g, '');
+        const numericValue = newValue.replace(/[^0-9]/g, '');
+        mobil.value.tarif = numericValue;
     }
 });
+
+const preventNonNumericInput = (e: KeyboardEvent) => {
+    if (!/[0-9]/.test(e.key) &&
+        e.key !== 'Backspace' &&
+        e.key !== 'Delete' &&
+        e.key !== 'ArrowLeft' &&
+        e.key !== 'ArrowRight' &&
+        e.key !== 'Tab' &&
+        !e.ctrlKey) {
+        e.preventDefault();
+    }
+};
 
 onMounted(async () => {
     if (props.selected) {
@@ -134,20 +147,10 @@ watch(
 </script>
 
 <template>
-    <VForm
-        class="form card mb-10"
-        @submit="submit"
-        :validation-schema="formSchema"
-        id="form-mobil"
-        ref="formRef"
-    >
+    <VForm class="form card mb-10" @submit="submit" :validation-schema="formSchema" id="form-mobil" ref="formRef">
         <div class="card-header align-items-center">
             <h2 class="mb-0">{{ selected ? "Edit" : "Tambah" }} Mobil </h2>
-            <button
-                type="button"
-                class="btn btn-sm btn-light-danger ms-auto"
-                @click="emit('close')"
-            > 
+            <button type="button" class="btn btn-sm btn-light-danger ms-auto" @click="emit('close')">
                 Batal
                 <i class="la la-times-circle p-0"></i>
             </button>
@@ -160,14 +163,8 @@ watch(
                         <label class="form-label fw-bold fs-6 required">
                             Merk
                         </label>
-                        <Field
-                            class="form-control form-control-lg form-control-solid"
-                            type="text"
-                            name="merk"
-                            autocomplete="off"
-                            v-model="mobil.merk"
-                            placeholder="Masukkan Merk Mobil"
-                        />
+                        <Field class="form-control form-control-lg form-control-solid" type="text" name="merk"
+                            autocomplete="off" v-model="mobil.merk" placeholder="Masukkan Merk Mobil" />
                         <div class="fv-plugins-message-container">
                             <div class="fv-help-block">
                                 <ErrorMessage name="merk" />
@@ -182,14 +179,8 @@ watch(
                         <label class="form-label fw-bold fs-6 required">
                             Model
                         </label>
-                        <Field
-                            class="form-control form-control-lg form-control-solid"
-                            type="text"
-                            name="model"
-                            autocomplete="off"
-                            v-model="mobil.model"
-                            placeholder="Masukkan Model Mobil"
-                        />
+                        <Field class="form-control form-control-lg form-control-solid" type="text" name="model"
+                            autocomplete="off" v-model="mobil.model" placeholder="Masukkan Model Mobil" />
                         <div class="fv-plugins-message-container">
                             <div class="fv-help-block">
                                 <ErrorMessage name="model" />
@@ -204,14 +195,8 @@ watch(
                         <label class="form-label fw-bold fs-6 ">
                             Type
                         </label>
-                        <Field
-                            class="form-control form-control-lg form-control-solid"
-                            type="text"
-                            name="type"
-                            autocomplete="off"
-                            v-model="mobil.type"
-                            placeholder="Masukkan Model Mobil"
-                        />
+                        <Field class="form-control form-control-lg form-control-solid" type="text" name="type"
+                            autocomplete="off" v-model="mobil.type" placeholder="Masukkan Model Mobil" />
                         <div class="fv-plugins-message-container">
                             <div class="fv-help-block">
                                 <ErrorMessage name="type" />
@@ -226,14 +211,8 @@ watch(
                         <label class="form-label fw-bold fs-6 ">
                             Tahun
                         </label>
-                        <Field
-                            class="form-control form-control-lg form-control-solid"
-                            type="number"
-                            name="tahun"
-                            autocomplete="off"
-                            v-model="mobil.tahun"
-                            placeholder="Masukkan Tahun Mobil"
-                        />
+                        <Field class="form-control form-control-lg form-control-solid" type="number" name="tahun"
+                            autocomplete="off" v-model="mobil.tahun" placeholder="Masukkan Tahun Mobil" />
                         <div class="fv-plugins-message-container">
                             <div class="fv-help-block">
                                 <ErrorMessage name="tahun" />
@@ -249,7 +228,8 @@ watch(
                             Tarif
                         </label>
                         <Field class="form-control form-control-lg form-control-solid" type="text" name="tarif"
-                        v-model="TarifFormat" placeholder="Masukkan Tarif Mobil" />
+                            v-model="TarifFormat" placeholder="Masukkan Tarif Mobil" @keydown="preventNonNumericInput"
+                            inputmode="numeric" />
                         <div class="fv-plugins-message-container">
                             <div class="fv-help-block">
                                 <ErrorMessage name="tarif" />
@@ -264,14 +244,8 @@ watch(
                         <label class="form-label fw-bold fs-6 ">
                             Kapasitas
                         </label>
-                        <Field
-                            class="form-control form-control-lg form-control-solid"
-                            type="string"
-                            name="kapasitas"
-                            autocomplete="off"
-                            v-model="mobil.kapasitas"
-                            placeholder="Masukkan Kapasitas Mobil"
-                        />
+                        <Field class="form-control form-control-lg form-control-solid" type="string" name="kapasitas"
+                            autocomplete="off" v-model="mobil.kapasitas" placeholder="Masukkan Kapasitas Mobil" />
                         <div class="fv-plugins-message-container">
                             <div class="fv-help-block">
                                 <ErrorMessage name="kapasitas" />
@@ -288,9 +262,9 @@ watch(
                         </label>
                         <Field name="bahan_bakar" type="hidden" v-model="mobil.bahan_bakar">
                             <select2 placeholder="Pilih Bahan Bakar" class="form-select-solid" :options="[
-                                { id: 'Bensin', text: 'Bensin'},
-                                { id: 'Solar (Diesel)', text: 'Solar (Diesel)'},
-                                { id: 'Hybrid', text :'Hybrid'}
+                                { id: 'Bensin', text: 'Bensin' },
+                                { id: 'Solar (Diesel)', text: 'Solar (Diesel)' },
+                                { id: 'Hybrid', text: 'Hybrid' }
                             ]" name="bahan_bakar" v-model="mobil.bahan_bakar">
                             </select2>
                         </Field>
@@ -307,12 +281,8 @@ watch(
                     <div class="fv-row mb-7">
                         <label class="form-label fw-bold fs-6"> Foto </label>
                         <!--begin::Input-->
-                        <file-upload
-                            :files="foto"
-                            :accepted-file-types="fileTypes"
-                            required
-                            v-on:updatefiles="(file) => (foto = file)"
-                        ></file-upload>
+                        <file-upload :files="foto" :accepted-file-types="fileTypes" required
+                            v-on:updatefiles="(file) => (foto = file)"></file-upload>
                         <!--end::Input-->
                         <div class="fv-plugins-message-container">
                             <div class="fv-help-block">
@@ -322,9 +292,9 @@ watch(
                     </div>
                     <!--end::Input group-->
                 </div>
-                
+
             </div>
-            
+
         </div>
         <div class="card-footer d-flex">
             <button type="submit" class="btn btn-primary btn-sm ms-auto">

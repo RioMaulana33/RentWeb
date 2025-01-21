@@ -17,12 +17,8 @@ return new class extends Migration
             $table->string('app');
             $table->text('description');
             $table->string('logo');
-            $table->string('banner');
-            $table->string('inlog');
             $table->string('bg_auth');
 
-            $table->string('dinas');
-            $table->string('pemerintah');
             $table->string('alamat');
             $table->string('telepon');
             $table->string('email');

@@ -3,5 +3,5 @@ export interface Delivery {
     uuid: string;
     nama: string;
     deskripsi: string;
-    cost: double;
+    biaya: double;
 }

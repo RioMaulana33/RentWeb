@@ -19,15 +19,11 @@ class SettingController extends Controller
             $request->validate([
                 'app' => 'required',
                 'description' => 'required',
-                'pemerintah' => 'required',
                 'alamat' => 'required',
-                'dinas' => 'required',
                 'telepon' => 'required',
                 'email' => 'required',
                 'logo' => 'required|image|mimes:jpeg,png,jpg|max:2048',
-                'inlog' => 'required|image|mimes:jpeg,png,jpg|max:2048',
                 'bg_auth' => 'required|image|mimes:jpeg,png,jpg|max:8192',
-                'banner' => 'required|image|mimes:jpeg,png,jpg|max:8192',
             ]);
 
             $setting = Setting::first();
@@ -42,11 +38,6 @@ class SettingController extends Controller
                 Storage::disk('public')->delete($old_photo);
             }
 
-            if ($setting->banner != null && $setting->banner != '') {
-                $old_photo = str_replace('/storage/', '', $setting->banner);
-                Storage::disk('public')->delete($old_photo);
-            }
-
             $data = $request->all();
 
             if ($request->hasFile('logo')) {
@@ -56,18 +47,10 @@ class SettingController extends Controller
             if ($request->hasFile('bg_auth')) {
                 $data['bg_auth'] = '/storage/' . $request->file('bg_auth')->store('setting', 'public');
             }
-
-            if ($request->hasFile('banner')) {
-                $data['banner'] = '/storage/' . $request->file('banner')->store('setting', 'public');
-            }
-            if ($request->hasFile('inlog')) {
-                $data['inlog'] = '/storage/' . $request->file('inlog')->store('setting', 'public');
-            }
-
             $setting->update($data);
 
             return response()->json([
-                'message' => 'Berhasil memperbarui data Konfigurasi Website',
+                'message' => 'Berhasil memperbarui data',
                 'data' => $setting
             ]);
         } else {

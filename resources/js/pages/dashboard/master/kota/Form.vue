@@ -21,8 +21,11 @@ const user = ref<User>({} as User);
 const formRef = ref();
 
 const formSchema = Yup.object().shape({
-    nama: Yup.string().required("Nama harus diisi"),
+    nama: Yup.string()
+        .required("Nama harus diisi")
+        .matches(/^[a-zA-Z\s]+$/, "Nama kota hanya boleh berisi huruf"),
 });
+
 
 function getEdit() {
     block(document.getElementById("form-user"));

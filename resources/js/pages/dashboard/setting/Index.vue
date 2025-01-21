@@ -153,7 +153,6 @@ export default defineComponent({
             app: Yup.string().required('Nama aplikasi wajib diisi'),
             description: Yup.string().required('Deskripsi wajib diisi'),
             email: Yup.string().required('Email wajib diisi'),
-            pemerintah: Yup.string().required('Nama pemerintah wajib diisi'),
             telepon: Yup.string().required('Telepon wajib diisi'),
         })
 

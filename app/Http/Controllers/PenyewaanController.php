@@ -15,6 +15,7 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Kota;
+use App\Models\User;
 
 class PenyewaanController extends Controller
 {
@@ -26,7 +27,9 @@ class PenyewaanController extends Controller
     
         DB::statement('set @no=0+' . $page * $per);
     
-        $query = Penyewaan::with(['mobil', 'delivery', 'user', 'kota']);
+        $query = Penyewaan::with(['mobil', 'delivery', 'user', 'kota'])->when($request->status != '-', function ($q) use ($request) {
+                $q->where('status', $request->status);
+            });
     
         if ($adminUser->hasRole('admin-kota')) {
             $kotaId = Kota::where('nama', $adminUser->name)->first()->id;
@@ -80,7 +83,8 @@ class PenyewaanController extends Controller
                             ->where('tanggal_selesai', '>=', $tanggal_selesai);
                     });
             })
-            ->where('status', '!=', 'cancelled')
+            // ->where('status', '!=', 'cancelled')
+            ->where('status', '!=', 'selesai')  // Explicitly exclude completed rentals
             ->count();
 
         $available = $activeRentals < $stokMobil->stok;
@@ -120,7 +124,6 @@ class PenyewaanController extends Controller
             'alamat_pengantaran' => 'nullable|string',
         ]);
 
-        // Set initial status to pending
         $validated['status'] = 'pending';
 
         // Cek ketersediaan mobil
@@ -162,7 +165,9 @@ class PenyewaanController extends Controller
 
     public function detail($uuid)
     {
-        $base = Penyewaan::where('uuid', $uuid)->with(['user', 'Mobil', 'Kota'])->first();
+        $base = Penyewaan::where('uuid', $uuid)
+            ->with(['user', 'mobil', 'kota', 'delivery']) 
+            ->first();
         return response()->json([
             'success' => true,
             'data' => $base
@@ -207,26 +212,130 @@ class PenyewaanController extends Controller
         ]);
     }
 
-    public function clickAktif($uuid)
+    private function hitungDenda($penyewaan, $waktuPengembalianAktual)
     {
-        $base = Penyewaan::findByUuid($uuid);
+        // Konversi string ke instance Carbon untuk perbandingan
+        $waktuPengembalianTerjadwal = Carbon::parse($penyewaan->tanggal_selesai . ' ' . $penyewaan->jam_mulai);
+        $waktuPengembalian = Carbon::parse($waktuPengembalianAktual);
+        
+        // Jika tidak terlambat, kembalikan 0
+        if ($waktuPengembalian <= $waktuPengembalianTerjadwal) {
+            return 0;
+        }
+        
+        // Hitung selisih jam
+        $jamTerlambat = $waktuPengembalian->diffInHours($waktuPengembalianTerjadwal);
+        
+        // Ambil harga sewa per hari
+        $hargaPerHari = $penyewaan->total_biaya;
+        
+        // Hitung denda berdasarkan keterlambatan
+        if ($jamTerlambat <= 1) {
+            return 0; // Masa tenggang 2 jam
+        } elseif ($jamTerlambat <= 6) {
+            return $hargaPerHari * 0.5; // 50% dari harga harian
+        } elseif ($jamTerlambat <= 24) {
+            return $hargaPerHari; // 100% dari harga harian
+        } else {
+            // Untuk lebih dari 24 jam, hitung per hari penuh
+            $hariTambahan = ceil($jamTerlambat / 24);
+            return $hargaPerHari * $hariTambahan;
+        }
+    }
 
-        if (!$base) {
+    public function catatPengembalian(Request $request, $uuid)
+    {
+        $request->validate([
+            'waktu_pengembalian_aktual' => 'required|date_format:Y-m-d H:i:s'
+        ], [
+            'waktu_pengembalian_aktual.required' => 'Waktu pengembalian harus diisi',
+            'waktu_pengembalian_aktual.date_format' => 'Format waktu pengembalian tidak valid'
+        ]);
+
+        $penyewaan = Penyewaan::findByUuid($uuid);
+        
+        if (!$penyewaan) {
             return response()->json([
-                'status' => 'false',
-                'message' => 'Penyewaan tidak ditemukan'
-            ], 404); // 404 Not Found
+                'status' => false,
+                'message' => 'Data penyewaan tidak ditemukan'
+            ], 404);
         }
 
-        $base->update([
-            'status' => 'aktif',
+        // Hitung denda
+        $denda = $this->hitungDenda($penyewaan, $request->waktu_pengembalian_aktual);
 
+        // Update penyewaan dengan waktu pengembalian aktual dan denda
+        $penyewaan->update([
+            'waktu_pengembalian_aktual' => $request->waktu_pengembalian_aktual,
+            'denda' => $denda,
+            'status' => 'selesai'
         ]);
 
         return response()->json([
-            'status' => 'true',
-            'message' => 'Penyewaan berhasil di ubah'
+            'status' => true,
+            'message' => 'Pengembalian berhasil dicatat',
+            'data' => [
+                'denda' => $denda,
+                'penyewaan' => $penyewaan
+            ]
         ]);
+    }
+
+
+    public function clickSelesai($uuid)
+    {
+        // Wrap everything in a database transaction to ensure data consistency
+        return DB::transaction(function () use ($uuid) {
+            // Changed from findByUuid
+            $base = Penyewaan::with(['mobil', 'kota'])
+                ->where('uuid', $uuid)
+                ->first();
+
+            if (!$base) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Data penyewaan tidak ditemukan'
+                ], 404);
+            }
+
+            // Set waktu pengembalian aktual ke waktu sekarang
+            $waktuPengembalianAktual = now();
+            
+            // Hitung denda
+            $denda = $this->hitungDenda($base, $waktuPengembalianAktual);
+
+            // Update status penyewaan
+            $base->update([
+                'status' => 'selesai',
+                'waktu_pengembalian_aktual' => $waktuPengembalianAktual,
+                'denda' => $denda
+            ]);
+
+            // Get the related StokMobil record
+            $stokMobil = StokMobil::where('mobil_id', $base->mobil_id)
+                ->where('kota_id', $base->kota_id)
+                ->first();
+
+            if ($stokMobil) {
+   
+                // Log the stock update for tracking purposes
+                Log::info('Rental completed and stock restored', [
+                    'rental_id' => $base->id,
+                    'mobil_id' => $base->mobil_id,
+                    'kota_id' => $base->kota_id,
+                    'current_stock' => $stokMobil->stok
+                ]);
+            }
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Penyewaan berhasil diselesaikan dan stok dipulihkan',
+                'data' => [
+                    'denda' => $denda,
+                    'penyewaan' => $base
+                ]
+            ]);
+        });
     }
     
     public function destroy($uuid)

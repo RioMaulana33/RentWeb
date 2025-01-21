@@ -50,11 +50,11 @@ export const useDelete = (callback?: ICallback, swalMixin?: any) => {
                 }),
     };
 };
-    export const useclickAktif = (callback?: ICallback, swalMixin?: any) => {
+    export const useclickSelesai = (callback?: ICallback, swalMixin?: any) => {
         const mySwal = Swal.mixin(
             swalMixin || {
                 customClass: {
-                    confirmButton: "btn btn-primary btn-sm",
+                    confirmButton: "btn btn-success btn-sm",
                     cancelButton: "btn btn-secondary btn-sm",
                 },
                 buttonsStyling: false,
@@ -63,12 +63,12 @@ export const useDelete = (callback?: ICallback, swalMixin?: any) => {
         const { onSuccess, onError, onSettled } = callback || {};
     
         return {
-            clickAktif: (url: string) =>
+            clickSelesai: (url: string) =>
                 mySwal
                     .fire({
-                        title: "Mengubah Keaktifan Data",
+                        title: "Apakah Penyewaan Sudah Selesai?",
                         text: "Data yang telah di ubah tidak bisa di kembalikan!",
-                        icon: "info",
+                        icon: "question",
                         showCancelButton: true,
                         confirmButtonText: "Ya, Ubah",
                         cancelButtonText: "Batalkan",

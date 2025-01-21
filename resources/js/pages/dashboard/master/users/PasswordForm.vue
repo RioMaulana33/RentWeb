@@ -16,6 +16,8 @@ const emit = defineEmits(["close", "refresh"]);
 const formRef = ref();
 const password = ref("");
 const passwordConfirmation = ref("");
+const showPassword = ref(false);
+const showPasswordConfirmation = ref(false);
 
 const formSchema = Yup.object().shape({
     password: Yup.string()
@@ -87,14 +89,20 @@ function submit() {
                             <label class="form-label fw-bold fs-6 required">
                                 Password Baru
                             </label>
-                            <Field
-                                class="form-control form-control-lg form-control-solid"
-                                type="password"
-                                name="password"
-                                autocomplete="off"
-                                v-model="password"
-                                placeholder="Masukkan password baru"
-                            />
+                            <div class="position-relative">
+                                <Field
+                                    class="form-control form-control-lg form-control-solid"
+                                    :type="showPassword ? 'text' : 'password'"
+                                    name="password"
+                                    autocomplete="off"
+                                    v-model="password"
+                                    placeholder="Masukkan password baru"
+                                />
+                                <i 
+                                    :class="['la', showPassword ? 'la-eye' : 'la-eye-slash', 'position-absolute', 'top-50', 'end-0', 'translate-middle-y', 'pe-4', 'fs-4', 'cursor-pointer']"
+                                    @click="showPassword = !showPassword"
+                                ></i>
+                            </div>
                             <div class="fv-plugins-message-container">
                                 <div class="fv-help-block">
                                     <ErrorMessage name="password" />
@@ -107,14 +115,20 @@ function submit() {
                             <label class="form-label fw-bold fs-6 required">
                                 Konfirmasi Password
                             </label>
-                            <Field
-                                class="form-control form-control-lg form-control-solid"
-                                type="password"
-                                name="password_confirmation"
-                                autocomplete="off"
-                                v-model="passwordConfirmation"
-                                placeholder="Konfirmasi password baru"
-                            />
+                            <div class="position-relative">
+                                <Field
+                                    class="form-control form-control-lg form-control-solid"
+                                    :type="showPasswordConfirmation ? 'text' : 'password'"
+                                    name="password_confirmation"
+                                    autocomplete="off"
+                                    v-model="passwordConfirmation"
+                                    placeholder="Konfirmasi password baru"
+                                />
+                                <i 
+                                    :class="['la', showPasswordConfirmation ? 'la-eye' : 'la-eye-slash', 'position-absolute', 'top-50', 'end-0', 'translate-middle-y', 'pe-4', 'fs-4', 'cursor-pointer']"
+                                    @click="showPasswordConfirmation = !showPasswordConfirmation"
+                                ></i>
+                            </div>
                             <div class="fv-plugins-message-container">
                                 <div class="fv-help-block">
                                     <ErrorMessage name="password_confirmation" />
@@ -132,3 +146,9 @@ function submit() {
         </VForm>
     </div>
 </template>
+
+<style scoped>
+.cursor-pointer {
+    cursor: pointer;
+}
+</style>

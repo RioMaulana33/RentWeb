@@ -111,6 +111,7 @@
         Route::prefix('mobil')->group(function () {
             Route::get('/get', [MobilController::class, 'get']);
             Route::get('getkota/{kota_id}', [MobilController::class, 'getMobilByKota']);
+            Route::get('/get/{id}', [MobilController::class, 'getById']);
             Route::get('/mobil/get/{uuid}', [MobilController::class, 'get']);
             Route::post('', [MobilController::class, 'index']);
             Route::post('/store', [MobilController::class, 'add']);
@@ -125,7 +126,8 @@
             Route::post('/store', [PenyewaanController::class, 'add'])->middleware('auth');
             Route::get('/penyewaan/edit/{uuid}', [PenyewaanController::class, 'edit']);
             Route::put('/penyewaan/update/{uuid}', [PenyewaanController::class, 'update']);
-            Route::post('/click-aktif/update/{uuid}', [PenyewaanController::class, 'clickAktif']);
+            Route::post('/click-selesai/update/{uuid}', [PenyewaanController::class, 'clickSelesai']);
+            Route::get('/pengembalian/{uuid}', [PenyewaanController::class, 'detailPengembalian']);
             Route::delete('/penyewaan/destroy/{uuid}', [PenyewaanController::class, 'destroy']);
         });
     });

@@ -16,7 +16,7 @@ return new class extends Migration
             $table->uuid()->unique();
             $table->string('nama')->nullable();
             $table->string('deskripsi')->nullable();
-            $table->double('cost')->nullable();
+            $table->double('biaya')->nullable();
             $table->rememberToken();
             $table->timestamps();
         });

@@ -24,7 +24,7 @@ const formRef = ref();
 const formSchema = Yup.object().shape({
     nama: Yup.string().required("Nama harus diisi"),
     deskripsi: Yup.string().required("Deskripsi  harus diisi"),
-    cost: Yup.string().required("Cost harus diisi"),
+    biaya: Yup.string().required("Biaya harus diisi"),
 });
 
 function getEdit() {
@@ -46,8 +46,7 @@ function submit() {
 
     formData.append("nama", user.value.nama);
     formData.append("deskripsi", user.value.deskripsi);
-    formData.append("cost", user.value.cost);
- 
+    formData.append("biaya", user.value.biaya);
 
     if (props.selected) {
         formData.append("_method", "PUT");
@@ -79,16 +78,9 @@ function submit() {
 }
 
 const formatRupiah = (value: number | string | null | undefined) => {
-    // Handle null or undefined
     if (value === null || value === undefined) return '';
-
-    // Convert to string and remove non-numeric characters
-    const numericValue = parseFloat(String(value).replace(/[^0-9.-]+/g, ''));
-
-    // Check if the value is a valid number
+    const numericValue = parseFloat(String(value).replace(/[^0-9]/g, ''));
     if (isNaN(numericValue)) return '';
-
-    // Format to Rupiah
     return new Intl.NumberFormat('id-ID', {
         style: 'currency',
         currency: 'IDR',
@@ -97,14 +89,26 @@ const formatRupiah = (value: number | string | null | undefined) => {
     }).format(numericValue);
 };
 
-// Add a computed property to handle input/display conversion
 const CostFormat = computed({
     get: () => formatRupiah(user.value.cost),
     set: (newValue) => {
-        // Remove non-numeric characters
-        user.value.cost = newValue.replace(/[^0-9]/g, '');
+        const numericValue = newValue.replace(/[^0-9]/g, '');
+        user.value.cost = numericValue;
     }
 });
+
+// Fungsi untuk mencegah input selain angka
+const preventNonNumericInput = (e: KeyboardEvent) => {
+    if (!/[0-9]/.test(e.key) && 
+        e.key !== 'Backspace' && 
+        e.key !== 'Delete' && 
+        e.key !== 'ArrowLeft' && 
+        e.key !== 'ArrowRight' && 
+        e.key !== 'Tab' && 
+        !e.ctrlKey) {
+        e.preventDefault();
+    }
+};
 
 onMounted(async () => {
     if (props.selected) {
@@ -120,7 +124,6 @@ watch(
         }
     }
 );
-
 </script>
 
 <template>
@@ -145,7 +148,6 @@ watch(
         <div class="card-body">
             <div class="row">
                 <div class="col-md-6">
-                    <!--begin::Input group-->
                     <div class="fv-row mb-7">
                         <label class="form-label fw-bold fs-6 required">
                             Nama
@@ -164,10 +166,8 @@ watch(
                             </div>
                         </div>
                     </div>
-                    <!--end::Input group-->
                 </div>
                 <div class="col-md-6">
-                    <!--begin::Input group-->
                     <div class="fv-row mb-7">
                         <label class="form-label fw-bold fs-6 required">
                             Deskripsi
@@ -186,29 +186,30 @@ watch(
                             </div>
                         </div>
                     </div>
-                    <!--end::Input group-->
                 </div>
              
                 <div class="col-md-6">
-                    <!--begin::Input group-->
                     <div class="fv-row mb-7">
                         <label class="form-label fw-bold fs-6 required">
-                            Cost
+                            Biaya
                         </label>
-                        <Field class="form-control form-control-lg form-control-solid" type="text" name="cost"
-                        v-model="CostFormat" placeholder="Masukkan Cost" />
+                        <Field
+                            class="form-control form-control-lg form-control-solid"
+                            type="text"
+                            name="biaya"
+                            v-model="CostFormat"
+                            placeholder="Masukkan Biaya"
+                            @keydown="preventNonNumericInput"
+                            inputmode="numeric"
+                        />
                         <div class="fv-plugins-message-container">
                             <div class="fv-help-block">
-                                <ErrorMessage name="cost" />
+                                <ErrorMessage name="biaya" />
                             </div>
                         </div>
                     </div>
-                    <!--end::Input group-->
                 </div>
-                
-                
             </div>
-            
         </div>
         <div class="card-footer d-flex">
             <button type="submit" class="btn btn-primary btn-sm ms-auto">

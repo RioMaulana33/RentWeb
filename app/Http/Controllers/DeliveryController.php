@@ -20,7 +20,7 @@ class DeliveryController extends Controller
         $data = Delivery::when($request->search, function (Builder $query, string $search) {
             $query->where('nama', 'like', "%$search%");
             $query->orWhere('deskripsi', 'like', "%$search%");
-            $query->orWhere('cost', 'like', "%$search%");
+            $query->orWhere('biaya', 'like', "%$search%");
         })->latest()->paginate($per, ['*', DB::raw('@no := @no + 1 AS no')]);
 
         return response()->json($data);
@@ -32,7 +32,7 @@ class DeliveryController extends Controller
         $base = Delivery::create([
             'nama'  => $request->input('nama'),
             'deskripsi'  => $request->input('deskripsi'),
-            'cost'  => $request->input('cost'),
+            'biaya'  => $request->input('biaya'),
 
         ]);
 
@@ -67,7 +67,7 @@ class DeliveryController extends Controller
         $Delivery->update($request->only([
             'nama',
             'deskripsi',
-            'cost',
+            'biaya',
         ]));
     
         return response()->json([
