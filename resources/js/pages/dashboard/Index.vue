@@ -125,15 +125,15 @@
       <!-- Chart Card -->
       <div class="card shadow-sm">
         <div class="card-header border-0">
-          <h3 class="card-title fw-bold text-dark">Statistik Rental</h3>
-          <div class="card-toolbar">
-            <button type="button" class="btn btn-sm btn-light">
+          <h3 class="card-title fw-bold">Statistik Rental & Pengguna</h3>
+          <!-- <div class="card-toolbar">
+            <button type="button" class="btn btn-sm btn-light" @click="exportData">
               Export Data
             </button>
-          </div>
+          </div> -->
         </div>
         <div class="card-body pt-4">
-          <canvas ref="mixedChart" height="350"></canvas>
+          <div ref="apexChart" style="min-height: 350px;"></div>
         </div>
       </div>
     </div>
@@ -143,6 +143,9 @@
 <script>
 import axios from "@/libs/axios";
 import Chart from 'chart.js/auto';
+import ApexCharts from 'apexcharts';
+import { format, parseISO } from 'date-fns';
+import { id as idLocale } from 'date-fns/locale';
 
 export default {
   data() {
@@ -153,15 +156,10 @@ export default {
         completedRentals: 0,
         totalRevenue: 0
       },
-      previousStats: {
-        activeRentals: 0,
-        totalCustomers: 0,
-        completedRentals: 0,
-        totalRevenue: 0
-      },
       loading: true,
       chart: null,
-      rentalData: []
+      rentalData: [],
+      userData: []
     }
   },
   methods: {
@@ -173,37 +171,28 @@ export default {
       }).format(value)
     },
 
-    calculatePercentageChange(current, previous) {
-      if (previous === 0) return 0;
-      return (((current - previous) / previous) * 100).toFixed(1);
-    },
-
     async fetchDashboardStats() {
       try {
-        // Fetch current stats
-        const currentResponse = await axios.get('/penyewaan/get', {
-          params: {
-            per: 9999 // Get all records for accurate counting
-          }
-        });
+        // Fetch rental data
+        const rentalResponse = await axios.get('/penyewaan/get');
+        const rentals = rentalResponse.data.data;
+        this.rentalData = rentals;
 
-        // Calculate stats from the response
-        const rentals = currentResponse.data.data;
-        this.rentalData = rentals; // Save for chart use
+        // Fetch user data 
+        const userResponse = await axios.get('master/users'); // Adjust endpoint as needed
+        const users = userResponse.data.data;
+        this.userData = users;
 
         this.stats.activeRentals = rentals.filter(rental => rental.status === 'aktif').length;
         this.stats.completedRentals = rentals.filter(rental => rental.status === 'selesai').length;
 
-        // Get unique customers
         const uniqueCustomers = new Set(rentals.map(rental => rental.user_id));
         this.stats.totalCustomers = uniqueCustomers.size;
 
-        // Calculate total revenue from completed rentals
         this.stats.totalRevenue = rentals
           .filter(rental => rental.status === 'selesai')
           .reduce((sum, rental) => sum + (rental.total_biaya || 0), 0);
 
-        // Update chart after getting new data
         this.initializeChart();
 
       } catch (error) {
@@ -214,136 +203,124 @@ export default {
     },
 
     processChartData() {
-  // Group rentals by month
   const monthlyData = {};
 
+  // Process rental data
   this.rentalData.forEach(rental => {
-    const date = new Date(rental.tanggal_mulai);
-    const monthYear = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    const date = parseISO(rental.tanggal_mulai);
+    const monthYear = format(date, 'yyyy-MM');
 
     if (!monthlyData[monthYear]) {
       monthlyData[monthYear] = {
-        active: 0,
-        completed: 0
+        totalRentals: 0
       };
     }
 
-    if (rental.status === 'aktif') {
-      monthlyData[monthYear].active++;
-    } else if (rental.status === 'selesai') {
-      monthlyData[monthYear].completed++;
+    monthlyData[monthYear].totalRentals++;
+  });
+
+  // Process user data (only users with 'user' role)
+  const userRoleUsers = this.userData.filter(user => 
+    user.roles && user.roles.some(role => role.name === 'user')
+  );
+
+  userRoleUsers.forEach(user => {
+    const date = parseISO(user.created_at);
+    const monthYear = format(date, 'yyyy-MM');
+
+    if (!monthlyData[monthYear]) {
+      monthlyData[monthYear] = {
+        totalRentals: 0
+      };
     }
   });
 
-  // Sort months
   const sortedMonths = Object.keys(monthlyData).sort();
 
   return {
     labels: sortedMonths.map(month => {
       const [year, monthNum] = month.split('-');
-      return `${new Date(year, monthNum - 1).toLocaleString('id-ID', { month: 'short' })}`;
+      return format(new Date(year, monthNum - 1), 'MMM', { locale: idLocale });
     }),
-    datasets: [
-      {
-        label: 'Rental Aktif',
-        data: sortedMonths.map(month => monthlyData[month].active),
-        borderColor: '#3699FF',
-        backgroundColor: 'rgba(54, 153, 255, 0.2)',
-        tension: 0.4,
-        fill: true,
-        pointRadius: 4,
-        pointBackgroundColor: '#3699FF'
-      },
-      {
-        label: 'Rental Selesai',
-        data: sortedMonths.map(month => monthlyData[month].completed),
-        borderColor: '#1BC5BD',
-        backgroundColor: 'rgba(27, 197, 189, 0.2)',
-        tension: 0.4,
-        fill: true,
-        pointRadius: 4,
-        pointBackgroundColor: '#1BC5BD'
-      }
-    ]
+    totalRentals: sortedMonths.map(month => monthlyData[month].totalRentals),
+    userCount: sortedMonths.map(month => 
+      this.userData.filter(user => 
+        user.roles && user.roles.some(role => role.name === 'user') &&
+        format(parseISO(user.created_at), 'yyyy-MM') === month
+      ).length
+    )
   };
 },
+
+
 
 initializeChart() {
   if (this.chart) {
     this.chart.destroy();
   }
 
-  const ctx = this.$refs.mixedChart.getContext('2d');
   const chartData = this.processChartData();
 
-  this.chart = new Chart(ctx, {
-    type: 'line',
-    data: chartData,
-    options: {
-      responsive: true,
-      interaction: {
-        mode: 'index',
-        intersect: false,
+  const options = {
+    series: [
+      {
+        name: 'Total Penyewaan',
+        data: chartData.totalRentals
       },
-      plugins: {
-        legend: {
-          position: 'top',
-          align: 'start',
-          labels: {
-            usePointStyle: true,
-            padding: 20,
-            boxWidth: 10
-          }
-        },
-        tooltip: {
-          mode: 'index',
-          intersect: false,
-          backgroundColor: 'white',
-          titleColor: '#6e6b7b',
-          bodyColor: '#6e6b7b',
-          borderColor: '#e9ecef',
-          borderWidth: 1,
-          padding: 10,
-          boxPadding: 5
-        }
-      },
-      scales: {
-        x: {
-          grid: {
-            display: true,
-            drawBorder: false,
-            color: '#f5f5f5'
-          },
-          ticks: {
-            color: '#6e6b7b'
-          }
-        },
-        y: {
-          beginAtZero: true,
-          grid: {
-            display: true,
-            drawBorder: false,
-            color: '#f5f5f5'
-          },
-          ticks: {
-            color: '#6e6b7b',
-            padding: 10,
-            stepSize: 20
-          }
+      {
+        name: 'Jumlah Customer',
+        data: chartData.userCount
+      }
+    ],
+    chart: {
+      type: 'area',
+      height: 350,
+      toolbar: {
+        show: false
+      }
+    },
+    colors: ['#3699FF', '#1BC5BD'],
+    dataLabels: {
+      enabled: false
+    },
+    stroke: {
+      curve: 'smooth',
+      width: 3
+    },
+    xaxis: {
+      categories: chartData.labels,
+      labels: {
+        style: {
+          colors: '#6e6b7b'
         }
       }
+    },
+    yaxis: {
+      labels: {
+        style: {
+          colors: '#6e6b7b'
+        }
+      }
+    },
+    tooltip: {
+      theme: 'light'
+    },
+    legend: {
+      position: 'top',
+      horizontalAlign: 'left'
     }
-  });
+  };
+
+  this.chart = new ApexCharts(this.$refs.apexChart, options);
+  this.chart.render();
 },
 
     exportData() {
-      // Implement export functionality if needed
       console.log('Export data clicked');
     }
   },
   mounted() {
     this.fetchDashboardStats();
-    // Refresh stats and chart every 5 minutes
     setInterval(this.fetchDashboardStats, 300000);
   },
   beforeDestroy() {
@@ -351,6 +328,8 @@ initializeChart() {
       this.chart.destroy();
     }
   }
+
+
 }
 </script>
 

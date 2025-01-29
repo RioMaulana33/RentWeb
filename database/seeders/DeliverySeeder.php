@@ -22,7 +22,7 @@ class DeliverySeeder extends Seeder
         Delivery::create([
           'nama' => 'Layanan Jemput',
           'deskripsi' => 'Kendaraan diantarkan ke lokasi pelanggan oleh sopir BluCarra sesuai jadwal yang disepakati',
-          'biaya' => 30000
+          'biaya' => 8000
         ]);
 
     

@@ -59,6 +59,40 @@ class PenyewaanController extends Controller
         return response()->json($data);
     }
 
+    public function userRentalHistory(Request $request)
+{
+    $per = $request->per ?? 10;
+    $page = $request->page ? $request->page - 1 : 0;
+    $user = Auth::user();
+    
+    DB::statement('set @no=0+' . $page * $per);
+    
+    $query = Penyewaan::with(['mobil', 'delivery', 'kota'])
+        ->where('user_id', $user->id);
+    
+    if ($request->search) {
+        $query->where(function ($query) use ($request) {
+            $search = '%' . $request->search . '%';
+            $query->where('tanggal_mulai', 'like', $search)
+                ->orWhere('kode_penyewaan', 'like', $search)
+                ->orWhere('jam_mulai', 'like', $search)
+                ->orWhere('status', 'like', $search)
+                ->orWhereHas('mobil', function ($q) use ($search) {
+                    $q->where('merk', 'like', $search);
+                });
+        });
+    }
+    
+    if ($request->status && $request->status != '-') {
+        $query->where('status', $request->status);
+    }
+    
+    $data = $query->latest()
+        ->paginate($per, ['*', DB::raw('@no := @no + 1 AS no')]);
+    
+    return response()->json($data);
+}
+
     private function checkAvailability($mobil_id, $kota_id, $tanggal_mulai, $tanggal_selesai)
     {
         // Ambil data stok total untuk mobil dan kota tersebut
@@ -107,8 +141,6 @@ class PenyewaanController extends Controller
 
         return $code;
     }
-
-   
     public function add(Request $request)
     {
         $validated = $request->validate([
@@ -152,7 +184,6 @@ class PenyewaanController extends Controller
             'data' => $penyewaan,
         ]);
     }
-    
 
     public function edit($uuid)
     {
@@ -230,7 +261,7 @@ class PenyewaanController extends Controller
         $hargaPerHari = $penyewaan->total_biaya;
         
         // Hitung denda berdasarkan keterlambatan
-        if ($jamTerlambat <= 1) {
+        if ($jamTerlambat <= 2) {
             return 0; // Masa tenggang 2 jam
         } elseif ($jamTerlambat <= 6) {
             return $hargaPerHari * 0.5; // 50% dari harga harian

@@ -11,6 +11,7 @@
     use App\Http\Controllers\MobilController;
     use App\Http\Controllers\PenyewaanController;
     use App\Http\Controllers\StokMobilController;
+    use App\Http\Controllers\MidtransController;
 
     /*
 |--------------------------------------------------------------------------
@@ -39,9 +40,9 @@
 
         //API FOR MOBILE
         Route::post('change-password', [UserController::class, 'changePassword'])->withoutMiddleware('auth'); //ganti password dalam akun
-        Route::post('initialize-registration', [AuthController::class, 'initializeRegistration'])->withoutMiddleware('auth');// initialize registration
-        Route::post('verify-registration-otp', [AuthController::class, 'verifyRegistrationOTP'])->withoutMiddleware('auth');// verify otp
-        Route::post('complete-registration', [AuthController::class, 'completeRegistration'])->withoutMiddleware('auth');// complete registration
+        Route::post('initialize-registration', [AuthController::class, 'initializeRegistration'])->withoutMiddleware('auth'); // initialize registration
+        Route::post('verify-registration-otp', [AuthController::class, 'verifyRegistrationOTP'])->withoutMiddleware('auth'); // verify otp
+        Route::post('complete-registration', [AuthController::class, 'completeRegistration'])->withoutMiddleware('auth'); // complete registration
         Route::post('resend-registration-otp', [AuthController::class, 'resendRegistrationOTP'])->withoutMiddleware('auth'); // resend otp
         Route::post('send-user-otp', [AuthController::class, 'sendUserOTP'])->withoutMiddleware('auth'); // otp ganti password
         Route::post('verify-user-otp', [AuthController::class, 'verifyUserOTP'])->withoutMiddleware('auth'); // verify otp
@@ -123,11 +124,16 @@
             Route::get('/get', [PenyewaanController::class, 'get']);
             Route::get('/penyewaan/detail/{uuid}', [PenyewaanController::class, 'detail']);
             Route::post('', [PenyewaanController::class, 'index']);
-            Route::post('/store', [PenyewaanController::class, 'add'])->middleware('auth');
+            Route::post('/history', [PenyewaanController::class, 'userRentalHistory']);
+            Route::post('/store', [PenyewaanController::class, 'add']);
             Route::get('/penyewaan/edit/{uuid}', [PenyewaanController::class, 'edit']);
             Route::put('/penyewaan/update/{uuid}', [PenyewaanController::class, 'update']);
             Route::post('/click-selesai/update/{uuid}', [PenyewaanController::class, 'clickSelesai']);
             Route::get('/pengembalian/{uuid}', [PenyewaanController::class, 'detailPengembalian']);
             Route::delete('/penyewaan/destroy/{uuid}', [PenyewaanController::class, 'destroy']);
+            Route::post('/midtrans/token', [MidtransController::class, 'getSnapToken']);
+            Route::post('/midtrans/callback', [MidtransController::class, 'handleCallback']);
+            Route::post('/midtrans/get-token', [MidtransController::class, 'getToken']);
         });
     });
+    

@@ -19,11 +19,11 @@ const router = useRouter();
 const status = ref('aktif');
 
 const statusOptions = ref<any[]>([
-      { id: '-', text: 'Semua' },
-      { id: 'aktif', text: 'Aktif' },
-      { id: 'pending', text: 'Pending' },
-      { id: 'selesai', text: 'Selesai' },
-  ]);
+    { id: '-', text: 'Semua' },
+    { id: 'aktif', text: 'Aktif' },
+    { id: 'pending', text: 'Pending' },
+    { id: 'selesai', text: 'Selesai' },
+]);
 
 const { clickSelesai } = useclickSelesai({
     onSuccess: async (result) => {
@@ -117,17 +117,30 @@ const columns = [
                     },
                     h("i", { class: "la la-eye fs-2" })
                 ),
+                // h(
+                //     "button",
+                //     {
+                //         class: "btn btn-sm btn-icon btn-info",
+                //         onClick: () => router.push(`/dashboard/penyewaan/detail/${cell.getValue()}`),
+                //     },
+                //     h("i", {class: "ki-duotone ki-eye"}, [
+
+                //         h("span", {class: "path1"}),
+                //         h("span", {class: "path2"}),
+                //         h("span", {class: "path3"}),
+                //     ])
+                // ),
                 row.status === 'aktif' && h(
                     "button",
                     {
-                        class: "btn btn-sm btn-success",
+                        class: "btn btn-sm btn-success d-flex align-items-center", // Added d-flex and align-items-center
                         onClick: () => clickSelesai(
                             `penyewaan/click-selesai/update/${cell.getValue()}`
                         ),
                     },
                     [
-                        h("i", { class: "la la-check fs-4" }),
-                        h("span", { class: "ms-1" }, "Selesai")
+                        h("i", { class: "la la-check fs-4 me-1" }), // Added me-1 for right margin
+                        h("span", "Selesai")
                     ]
                 ),
             ]);
@@ -167,13 +180,8 @@ onUnmounted(() => {
         <div class="card-header align-items-center d-flex">
             <h2 class="mb-0">Detail Penyewaan</h2>
             <div class="d-flex gap-3 ms-auto align-items-center">
-                <select2
-                    placeholder="Pilih Status"
-                    class="form-select-solid mw-200px mw-md-100"
-                    name="status"
-                    :options="statusOptions"
-                    v-model="status"
-                />
+                <select2 placeholder="Pilih Status" class="form-select-solid mw-200px mw-md-100" name="status"
+                    :options="statusOptions" v-model="status" />
                 <button type="button" class="btn btn-sm btn-primary" v-if="!openForm" @click="openForm = true">
                     Tambah
                     <i class="la la-plus"></i>
@@ -181,7 +189,8 @@ onUnmounted(() => {
             </div>
         </div>
         <div class="card-body">
-            <paginate ref="paginateRef" id="penyewaan" url="/penyewaan" :columns="columns" :payload="{ status: status }"></paginate>
+            <paginate ref="paginateRef" id="penyewaan" url="/penyewaan" :columns="columns"
+                :payload="{ status: status }"></paginate>
         </div>
     </div>
 </template>

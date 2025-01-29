@@ -242,7 +242,7 @@
                 <a @click="scrollToSection('why-blucarra')"
                   style="color: white; text-decoration: none; transition: color 0.3s; position: relative; padding-left: 20px; font-size: 0.95rem;">
                   <span
-                    style="position: absolute; left: 0; top: 6px; width: 5px; height: 5px; background-color: #60A5FA; border-radius: 50%;"></span>
+                    style="position: absolute; left: 0; top: 6px; width: 5px; height: 5px; background-color: #60A5FA; border-radius: 50%; cursor: pointer;"></span>
                   Mengapa BluCarra
                 </a>
               </li>
@@ -250,7 +250,7 @@
                 <a @click="scrollToSection('tutorial')"
                   style="color: white; text-decoration: none; transition: color 0.3s; position: relative; padding-left: 20px; font-size: 0.95rem;">
                   <span
-                    style="position: absolute; left: 0; top: 6px; width: 5px; height: 5px; background-color: #60A5FA; border-radius: 50%;"></span>
+                    style="position: absolute; left: 0; top: 6px; width: 5px; height: 5px; background-color: #60A5FA; border-radius: 50%; cursor: pointer;"></span>
                   Cara Menyewa
                 </a>
               </li>
@@ -258,7 +258,7 @@
                 <a @click="scrollToSection('testimonials')"
                   style="color: white; text-decoration: none; transition: color 0.3s; position: relative; padding-left: 20px; font-size: 0.95rem;">
                   <span
-                    style="position: absolute; left: 0; top: 6px; width: 5px; height: 5px; background-color: #60A5FA; border-radius: 50%;"></span>
+                    style="position: absolute; left: 0; top: 6px; width: 5px; height: 5px; background-color: #60A5FA; border-radius: 50%; cursor: pointer;"></span>
                   Apa Kata Pengguna
                 </a>
               </li>

@@ -21,6 +21,7 @@ class SettingSeeder extends Seeder
             'description' =>  'Aplikasi e-Rental yang menyediakan layanan sewa mobil online',
             'logo' =>  '/media/misc/logoz.png',
             'bg_auth' =>  '/media/misc/bg_auth.jpg',
+            'inlog' =>  '/media/misc/mobilelog.png',
             'alamat' =>  'Jl. Tentara Genie Pelajar No.26, Petemon, Kec. Sawahan, Surabaya, Jawa Timur 60252',
             'telepon' =>  '08123456789',
             'email' =>  'blucarra@gmail.com',

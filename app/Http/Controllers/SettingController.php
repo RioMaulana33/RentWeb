@@ -23,6 +23,7 @@ class SettingController extends Controller
                 'telepon' => 'required',
                 'email' => 'required',
                 'logo' => 'required|image|mimes:jpeg,png,jpg|max:2048',
+                'inlog' => 'required|image|mimes:jpeg,png,jpg|max:2048',
                 'bg_auth' => 'required|image|mimes:jpeg,png,jpg|max:8192',
             ]);
 

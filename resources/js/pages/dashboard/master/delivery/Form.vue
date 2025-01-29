@@ -78,9 +78,16 @@ function submit() {
 }
 
 const formatRupiah = (value: number | string | null | undefined) => {
+    // Handle null or undefined
     if (value === null || value === undefined) return '';
-    const numericValue = parseFloat(String(value).replace(/[^0-9]/g, ''));
+
+    // Convert to string and remove non-numeric characters
+    const numericValue = parseFloat(String(value).replace(/[^0-9.-]+/g, ''));
+
+    // Check if the value is a valid number
     if (isNaN(numericValue)) return '';
+
+    // Format to Rupiah
     return new Intl.NumberFormat('id-ID', {
         style: 'currency',
         currency: 'IDR',
@@ -89,11 +96,11 @@ const formatRupiah = (value: number | string | null | undefined) => {
     }).format(numericValue);
 };
 
-const CostFormat = computed({
-    get: () => formatRupiah(user.value.cost),
+const BiayaFormat = computed({
+    get: () => formatRupiah(user.value.biaya),
     set: (newValue) => {
         const numericValue = newValue.replace(/[^0-9]/g, '');
-        user.value.cost = numericValue;
+        user.value.biaya = numericValue;
     }
 });
 
@@ -197,7 +204,7 @@ watch(
                             class="form-control form-control-lg form-control-solid"
                             type="text"
                             name="biaya"
-                            v-model="CostFormat"
+                            v-model="BiayaFormat"
                             placeholder="Masukkan Biaya"
                             @keydown="preventNonNumericInput"
                             inputmode="numeric"

@@ -18,7 +18,7 @@ return new class extends Migration
             $table->text('description');
             $table->string('logo');
             $table->string('bg_auth');
-
+            $table->string('inlog');
             $table->string('alamat');
             $table->string('telepon');
             $table->string('email');
