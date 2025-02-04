@@ -22,6 +22,27 @@ const columns = [
     column.accessor("nama", {
         header: "Kota",
     }),
+    column.accessor("alamat", {
+        header: "Alamat",
+    }),
+    column.accessor("foto", {
+    header: "Foto mobil",
+    cell: cell => {
+        const fotoPath = cell.getValue();
+
+        // Cek jika fotoPath ada, jika tidak, tampilkan placeholder atau penanganan default
+        if (!fotoPath) {
+            return h('img', { src: `/storage/kota/${cell.getValue()}`, width: 150 });
+        }
+
+        // Jika path dimulai dengan '/media', gunakan langsung
+        const imageUrl = fotoPath.startsWith('/media')
+            ? fotoPath
+            : `/storage/${fotoPath}`;
+
+        return h('img', { src: imageUrl, width: 150 });
+    }
+}),
     column.accessor("uuid", {
         header: "Aksi",
         cell: (cell) =>

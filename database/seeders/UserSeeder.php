@@ -46,7 +46,6 @@ class UserSeeder extends Seeder
             'email' => 'customertest@gmail.com',
             'password' => bcrypt('12345678'),
             'phone' => '089878787878',
-            'verify_ktp' => 'Terverifikasi',
         ])->assignRole('user');
     }
 }

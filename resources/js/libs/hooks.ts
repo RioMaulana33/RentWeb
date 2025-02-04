@@ -1,5 +1,6 @@
 import axios from "./axios";
 import Swal from "sweetalert2";
+import dayjs from 'dayjs';
 
 interface ICallback {
     onSuccess?: Function;
@@ -50,48 +51,53 @@ export const useDelete = (callback?: ICallback, swalMixin?: any) => {
                 }),
     };
 };
-    export const useclickSelesai = (callback?: ICallback, swalMixin?: any) => {
-        const mySwal = Swal.mixin(
-            swalMixin || {
-                customClass: {
-                    confirmButton: "btn btn-success btn-sm",
-                    cancelButton: "btn btn-secondary btn-sm",
-                },
-                buttonsStyling: false,
-            }
-        );
-        const { onSuccess, onError, onSettled } = callback || {};
-    
-        return {
-            clickSelesai: (url: string) =>
-                mySwal
-                    .fire({
-                        title: "Apakah Penyewaan Sudah Selesai?",
-                        text: "Data yang telah di ubah tidak bisa di kembalikan!",
-                        icon: "question",
-                        showCancelButton: true,
-                        confirmButtonText: "Ya, Ubah",
-                        cancelButtonText: "Batalkan",
-                        reverseButtons: true,
-                        preConfirm: () => {
-                            return axios.post(url).catch((error) => {
-                                Swal.showValidationMessage(
-                                    error.response.data.message
-                                );
-                            });
-                        },
-                    })
-                    .then((result) => {
-                        if (result.isConfirmed) {
-                            mySwal.fire(
-                                "Berhasil!",
-                                result.value.data.message,
-                                "success"
+export const useclickSelesai = (callback?: ICallback, swalMixin?: any) => {
+    const mySwal = Swal.mixin(
+        swalMixin || {
+            customClass: {
+                confirmButton: "btn btn-success btn-sm",
+                cancelButton: "btn btn-secondary btn-sm",
+            },
+            buttonsStyling: false,
+        }
+    );
+    const { onSuccess, onError, onSettled } = callback || {};
+
+    return {
+        clickSelesai: (url: string) =>
+            mySwal
+                .fire({
+                    title: "Apakah Penyewaan Sudah Selesai?",
+                    text: "Data yang telah di ubah tidak bisa di kembalikan!",
+                    icon: "question",
+                    showCancelButton: true,
+                    confirmButtonText: "Ya, Ubah",
+                    cancelButtonText: "Batalkan",
+                    reverseButtons: true,
+                    preConfirm: () => {
+                        // Get current datetime in the correct format
+                        const waktuPengembalianAktual = dayjs().format('YYYY-MM-DD HH:mm:ss');
+                        
+                        return axios.post(url, {
+                            waktu_pengembalian_aktual: waktuPengembalianAktual
+                        }).catch((error) => {
+                            Swal.showValidationMessage(
+                                error.response.data.message
                             );
-                            onSuccess && onSuccess();
-                        }
-                    }),
-        };
+                        });
+                    },
+                })
+                .then((result) => {
+                    if (result.isConfirmed) {
+                        mySwal.fire(
+                            "Berhasil!",
+                            result.value.data.message,
+                            "success"
+                        );
+                        onSuccess && onSuccess();
+                    }
+                }),
+    };
 };
 
 export const useDownloadWord = (callback?: ICallback, swalMixin?: any) => {

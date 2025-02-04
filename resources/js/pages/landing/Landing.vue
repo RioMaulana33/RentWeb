@@ -37,13 +37,13 @@
     </a>
   </div>
 
-      <div class="language-selector" style="display: flex; align-items: center;">
+      <!-- <div class="language-selector" style="display: flex; align-items: center;">
         <select v-model="selectedLanguage" @change="changeLanguage"
           style="background-color: #3b82f6; color: white; border: none; padding: 10px 8px;border-radius: 20px;">
           <option value="id" style="background-color: white; color: black;">🇮🇩 Indonesia</option>
           <option value="en" style="background-color: white; color: black;">🇬🇧 English</option>
         </select>
-      </div>
+      </div> -->
     </nav>
 
     <!-- Hero Section -->

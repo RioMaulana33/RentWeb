@@ -26,7 +26,8 @@ class Penyewaan extends Model
         'total_biaya',
         'alamat_pengantaran',
         'waktu_pengembalian_aktual',
-        'denda'
+        'denda',
+        'maintenance_end',
     ];
 
     public function Mobil()

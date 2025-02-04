@@ -65,25 +65,77 @@ class MobilController extends Controller
     }
 }
 
-    public function getMobilByKota($kota_id)
-    {
-        try {
-            $data = StokMobil::with(['mobil', 'kota'])
-                ->where('kota_id', $kota_id)
-                ->where('stok', '>', 0)
-                ->get();
-    
-            return response()->json([
-                'status' => true,
-                'data' => $data
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Gagal mengambil data mobil: ' . $e->getMessage()
-            ], 500);
+public function getMobilByKota(Request $request, $kota_id)
+{
+    try {
+        $query = StokMobil::with(['mobil', 'kota'])
+            ->where('kota_id', $kota_id)
+            ->where('stok', '>', 0);
+
+        // Apply search
+        if ($request->has('search')) {
+            $search = $request->search;
+            $query->whereHas('mobil', function (Builder $q) use ($search) {
+                $q->where('merk', 'like', "%{$search}%")
+                  ->orWhere('model', 'like', "%{$search}%")
+                  ->orWhere('type', 'like', "%{$search}%");
+            });
         }
+
+        // Apply filters
+        if ($request->has('priceRange')) {
+            $query->whereHas('mobil', function (Builder $q) use ($request) {
+                switch ($request->priceRange) {
+                    case 'under200':
+                        $q->where('tarif', '<', 200000);
+                        break;
+                    case '200to500':
+                        $q->whereBetween('tarif', [200000, 500000]);
+                        break;
+                    case 'above500':
+                        $q->where('tarif', '>', 500000);
+                        break;
+                }
+            });
+        }
+
+        if ($request->has('fuelType') && $request->fuelType !== 'all') {
+            $query->whereHas('mobil', function (Builder $q) use ($request) {
+                $q->where('bahan_bakar', $request->fuelType);
+            });
+        }
+        if ($request->has('model') && $request->model !== 'all') {
+            $query->whereHas('mobil', function (Builder $q) use ($request) {
+                $q->where('model', $request->model);
+            });
+        }
+
+        if ($request->has('carType') && $request->carType !== 'all') {
+            $query->whereHas('mobil', function (Builder $q) use ($request) {
+                $q->where('type', $request->carType);
+            });
+        }
+
+        if ($request->has('capacity') && $request->capacity !== 'all') {
+            $query->whereHas('mobil', function (Builder $q) use ($request) {
+                $q->where('kapasitas', $request->capacity);
+            });
+        }
+
+        $data = $query->get();
+
+        return response()->json([
+            'status' => true,
+            'data' => $data
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => false,
+            'message' => 'Gagal mengambil data mobil: ' . $e->getMessage()
+        ], 500);
     }
+}
+
     
     public function add(Request $request)
     {

@@ -6,6 +6,7 @@ use Midtrans\Config;
 use Midtrans\Snap;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use App\Models\Penyewaan;
 
 class MidtransController extends Controller
 {
@@ -21,7 +22,7 @@ class MidtransController extends Controller
     {
         try {
             $orderId = 'RENTAL-' . time();
-            
+    
             $params = [
                 'transaction_details' => [
                     'order_id' => $orderId,
@@ -41,14 +42,14 @@ class MidtransController extends Controller
                     ]
                 ],
                 'callbacks' => [
-                    'finish' => 'http://192.168.1.7:8000/payment_status=success',
-                    'error' => 'http://192.168.1.7:8000/payment_status=failure',
-                    'cancel' => 'http://192.168.1.7:8000/payment_status=failure'
+                    'finish' => env('MIDTRANS_REDIRECT_URL') . '?payment_status=success&order_id=' . $orderId,
+                    'error' => env('MIDTRANS_REDIRECT_URL') . '?payment_status=failure&order_id=' . $orderId,
+                    'cancel' => env('MIDTRANS_REDIRECT_URL') . '?payment_status=cancel&order_id=' . $orderId
                 ]
             ];
     
             $snapToken = Snap::getSnapToken($params);
-            
+    
             return response()->json([
                 'status' => 'success',
                 'snap_token' => $snapToken,
@@ -59,6 +60,57 @@ class MidtransController extends Controller
             \Log::error('Midtrans Error: ' . $e->getMessage());
             return response()->json([
                 'status' => 'error',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+    
+    public function handleCallback(Request $request)
+    {
+        try {
+            $notification = json_decode($request->getContent(), true);
+            $orderId = $notification['order_id'];
+            $transactionStatus = $notification['transaction_status'];
+            $fraudStatus = $notification['fraud_status'];
+
+            // Get temporary rental data
+            $tempRentalData = session('temp_rental_' . $orderId);
+
+            if (!$tempRentalData) {
+                throw new \Exception('Temporary rental data not found');
+            }
+
+            if ($transactionStatus == 'capture' && $fraudStatus == 'accept') {
+                // Payment success, create rental
+                $rentalData = [
+                    ...$tempRentalData,
+                    'status' => 'pending',
+                    'user_id' => auth()->id(),
+                    'payment_status' => 'paid',
+                    'midtrans_transaction_id' => $notification['transaction_id'],
+                    'payment_time' => now()
+                ];
+
+                $penyewaan = Penyewaan::create($rentalData);
+
+                // Clear temporary data
+                session()->forget('temp_rental_' . $orderId);
+
+                return response()->json([
+                    'status' => true,
+                    'message' => 'Payment successful and rental created',
+                    'data' => $penyewaan
+                ]);
+            }
+
+            return response()->json([
+                'status' => false,
+                'message' => 'Payment failed or pending'
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Midtrans Callback Error: ' . $e->getMessage());
+            return response()->json([
+                'status' => false,
                 'message' => $e->getMessage()
             ], 500);
         }

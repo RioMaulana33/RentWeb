@@ -203,117 +203,117 @@ export default {
     },
 
     processChartData() {
-  const monthlyData = {};
+      const monthlyData = {};
 
-  // Process rental data
-  this.rentalData.forEach(rental => {
-    const date = parseISO(rental.tanggal_mulai);
-    const monthYear = format(date, 'yyyy-MM');
+      // Process rental data
+      this.rentalData.forEach(rental => {
+        const date = parseISO(rental.tanggal_mulai);
+        const monthYear = format(date, 'yyyy-MM');
 
-    if (!monthlyData[monthYear]) {
-      monthlyData[monthYear] = {
-        totalRentals: 0
-      };
-    }
-
-    monthlyData[monthYear].totalRentals++;
-  });
-
-  // Process user data (only users with 'user' role)
-  const userRoleUsers = this.userData.filter(user => 
-    user.roles && user.roles.some(role => role.name === 'user')
-  );
-
-  userRoleUsers.forEach(user => {
-    const date = parseISO(user.created_at);
-    const monthYear = format(date, 'yyyy-MM');
-
-    if (!monthlyData[monthYear]) {
-      monthlyData[monthYear] = {
-        totalRentals: 0
-      };
-    }
-  });
-
-  const sortedMonths = Object.keys(monthlyData).sort();
-
-  return {
-    labels: sortedMonths.map(month => {
-      const [year, monthNum] = month.split('-');
-      return format(new Date(year, monthNum - 1), 'MMM', { locale: idLocale });
-    }),
-    totalRentals: sortedMonths.map(month => monthlyData[month].totalRentals),
-    userCount: sortedMonths.map(month => 
-      this.userData.filter(user => 
-        user.roles && user.roles.some(role => role.name === 'user') &&
-        format(parseISO(user.created_at), 'yyyy-MM') === month
-      ).length
-    )
-  };
-},
-
-
-
-initializeChart() {
-  if (this.chart) {
-    this.chart.destroy();
-  }
-
-  const chartData = this.processChartData();
-
-  const options = {
-    series: [
-      {
-        name: 'Total Penyewaan',
-        data: chartData.totalRentals
-      },
-      {
-        name: 'Jumlah Customer',
-        data: chartData.userCount
-      }
-    ],
-    chart: {
-      type: 'area',
-      height: 350,
-      toolbar: {
-        show: false
-      }
-    },
-    colors: ['#3699FF', '#1BC5BD'],
-    dataLabels: {
-      enabled: false
-    },
-    stroke: {
-      curve: 'smooth',
-      width: 3
-    },
-    xaxis: {
-      categories: chartData.labels,
-      labels: {
-        style: {
-          colors: '#6e6b7b'
+        if (!monthlyData[monthYear]) {
+          monthlyData[monthYear] = {
+            totalRentals: 0
+          };
         }
-      }
-    },
-    yaxis: {
-      labels: {
-        style: {
-          colors: '#6e6b7b'
-        }
-      }
-    },
-    tooltip: {
-      theme: 'light'
-    },
-    legend: {
-      position: 'top',
-      horizontalAlign: 'left'
-    }
-  };
 
-  this.chart = new ApexCharts(this.$refs.apexChart, options);
-  this.chart.render();
-},
+        monthlyData[monthYear].totalRentals++;
+      });
+
+      // Process user data (only users with 'user' role)
+      const userRoleUsers = this.userData.filter(user =>
+        user.roles && user.roles.some(role => role.name === 'user')
+      );
+
+      userRoleUsers.forEach(user => {
+        const date = parseISO(user.created_at);
+        const monthYear = format(date, 'yyyy-MM');
+
+        if (!monthlyData[monthYear]) {
+          monthlyData[monthYear] = {
+            totalRentals: 0
+          };
+        }
+      });
+
+      const sortedMonths = Object.keys(monthlyData).sort();
+
+      return {
+        labels: sortedMonths.map(month => {
+          const [year, monthNum] = month.split('-');
+          return format(new Date(year, monthNum - 1), 'MMM', { locale: idLocale });
+        }),
+        totalRentals: sortedMonths.map(month => monthlyData[month].totalRentals),
+        userCount: sortedMonths.map(month =>
+          this.userData.filter(user =>
+            user.roles && user.roles.some(role => role.name === 'user') &&
+            format(parseISO(user.created_at), 'yyyy-MM') === month
+          ).length
+        )
+      };
+    },
+
+
+
+    initializeChart() {
+      if (this.chart) {
+        this.chart.destroy();
+      }
+
+      const chartData = this.processChartData();
+
+      const options = {
+        series: [
+          {
+            name: 'Total Penyewaan',
+            data: chartData.totalRentals
+          },
+          {
+            name: 'Jumlah Customer',
+            data: chartData.userCount
+          }
+        ],
+        chart: {
+          type: 'area',
+          height: 350,
+          toolbar: {
+            show: false
+          }
+        },
+        colors: ['#3699FF', '#1BC5BD'],
+        dataLabels: {
+          enabled: false
+        },
+        stroke: {
+          curve: 'smooth',
+          width: 3
+        },
+        xaxis: {
+          categories: chartData.labels,
+          labels: {
+            style: {
+              colors: '#6e6b7b'
+            }
+          }
+        },
+        yaxis: {
+          labels: {
+            style: {
+              colors: '#6e6b7b'
+            }
+          }
+        },
+        tooltip: {
+          theme: 'light'
+        },
+        legend: {
+          position: 'top',
+          horizontalAlign: 'left'
+        }
+      };
+
+      this.chart = new ApexCharts(this.$refs.apexChart, options);
+      this.chart.render();
+    },
 
     exportData() {
       console.log('Export data clicked');

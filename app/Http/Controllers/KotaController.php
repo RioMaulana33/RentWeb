@@ -18,7 +18,9 @@ class KotaController extends Controller
 
         DB::statement('set @no=0+' . $page * $per);
         $data = Kota::when($request->search, function (Builder $query, string $search) {
-            $query->where('nama', 'like', "%$search%");
+            $query->where('nama', 'like', "%$search%")
+                ->orWhere('alamat', 'like', "%$search%")
+                ->orWhere('deskripsi', 'like', "%$search%");
         })->orderBy('nama')->paginate($per, ['*', DB::raw('@no := @no + 1 AS no')]);
 
         return response()->json($data);
@@ -29,7 +31,8 @@ class KotaController extends Controller
         // simpan data
         $base = Kota::create([
            'nama'  => $request->input('nama'),
-
+           'alamat'  => $request->input('alamat'),
+           'deskripsi'  => $request->input('deskripsi'),
         ]);
 
         //response
@@ -61,12 +64,28 @@ class KotaController extends Controller
     
         $request->validate([
             'nama' => 'required|string',
+            'alamat' => 'required|string',
         ]);
     
         // Update data umum
         $Kota->update($request->only([
-            'nama' 
+            'nama',
+            'alamat',
+            'deskripsi',
         ]));
+
+         // Jika ada file foto yang diunggah, lakukan update
+         if ($request->hasFile('foto')) {
+            // Hapus foto lama jika ada
+            if ($Kota->foto) {
+                Storage::delete(str_replace('public/', '', $Kota->foto));
+            }
+    
+            // Simpan file foto baru
+            $Kota->update([
+                'foto' => str_replace('public/', '', $request->file('foto')->store('public/kota')),
+            ]);
+        }
     
     
         return response()->json([

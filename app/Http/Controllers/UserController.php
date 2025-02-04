@@ -39,7 +39,6 @@ class UserController extends Controller
             ->when($request->search, function (Builder $query, string $search) {
                 $query->where('name', 'like', "%$search%")
                     ->orWhere('email', 'like', "%$search%")
-                    ->orWhere('verify_ktp', 'like', "%$search%")
                     ->orWhere('phone', 'like', "%$search%");
             });
     
@@ -144,6 +143,7 @@ class UserController extends Controller
     public function changePassword(Request $request)
     {
         $validator = Validator::make($request->all(), [
+            'old_password' => 'required',
             'password' => 'required|min:8|confirmed',
         ]);
 
@@ -155,12 +155,29 @@ class UserController extends Controller
         }
 
         $user = $request->user();
+        
+        // Verify old password
+        if (!Hash::check($request->old_password, $user->password)) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Password lama tidak sesuai'
+            ], 422);
+        }
+
+        // Check if new password is same as old password
+        if (Hash::check($request->password, $user->password)) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Password baru tidak boleh sama dengan password lama'
+            ], 422);
+        }
+
         $user->password = Hash::make($request->password);
         $user->save();
 
         return response()->json([
             'status' => true,
-            'message' => 'Password berhasil diubah.'
+            'message' => 'Password berhasil diubah'
         ]);
     }
 

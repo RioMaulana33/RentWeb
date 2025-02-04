@@ -15,6 +15,9 @@ return new class extends Migration
             $table->id();
             $table->uuid()->unique();
             $table->string('nama')->unique(); 
+            $table->text('alamat')->nullable();
+            $table->text('deskripsi')->nullable(); 
+            $table->string('foto')->nullable();
             $table->timestamps();
         });
     }

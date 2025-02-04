@@ -126,6 +126,7 @@
             Route::post('', [PenyewaanController::class, 'index']);
             Route::post('/history', [PenyewaanController::class, 'userRentalHistory']);
             Route::post('/store', [PenyewaanController::class, 'add']);
+            Route::post('/check-stok', [PenyewaanController::class, 'checkStok']);
             Route::get('/penyewaan/edit/{uuid}', [PenyewaanController::class, 'edit']);
             Route::put('/penyewaan/update/{uuid}', [PenyewaanController::class, 'update']);
             Route::post('/click-selesai/update/{uuid}', [PenyewaanController::class, 'clickSelesai']);
@@ -134,6 +135,7 @@
             Route::post('/midtrans/token', [MidtransController::class, 'getSnapToken']);
             Route::post('/midtrans/callback', [MidtransController::class, 'handleCallback']);
             Route::post('/midtrans/get-token', [MidtransController::class, 'getToken']);
+            Route::get('/check/{orderId}', [PenyewaanController::class, 'checkRental']);
         });
     });
     

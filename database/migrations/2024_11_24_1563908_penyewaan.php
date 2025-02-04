@@ -31,6 +31,7 @@ return new class extends Migration
             $table->timestamp('payment_time')->nullable(); // Removed after()
             $table->double('total_biaya')->nullable();
             $table->string('alamat_pengantaran')->nullable();
+            $table->timestamp('maintenance_end')->nullable(); 
             $table->timestamp('waktu_pengembalian_aktual')->nullable();
             $table->decimal('denda', 12, 2)->default(0);
             $table->rememberToken();

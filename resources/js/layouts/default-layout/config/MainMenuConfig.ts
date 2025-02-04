@@ -25,18 +25,18 @@ const MainMenuConfig: Array<MenuItem> = [
                 name: "dashboard-penyewaan",
                 keenthemesIcon: "abstract-20",
             },
-            {
-                heading: "Pembayaran",
-                route: "/dashboard/pembayaran",
-                name: "dashboard-pembayaran",
-                keenthemesIcon: "two-credit-cart",
-            },
-            {
-                heading: "Laporan",
-                route: "/dashboard/laporan",
-                name: "dashboard-laporan",
-                keenthemesIcon: "document",
-            },
+            // {
+            //     heading: "Pembayaran",
+            //     route: "/dashboard/pembayaran",
+            //     name: "dashboard-pembayaran",
+            //     keenthemesIcon: "two-credit-cart",
+            // },
+            // {
+            //     heading: "Laporan",
+            //     route: "/dashboard/laporan",
+            //     name: "dashboard-laporan",
+            //     keenthemesIcon: "document",
+            // },
             {
                 sectionTitle: "Kelola Mobil",
                 route: "/dashboard/kelola-mobil",
