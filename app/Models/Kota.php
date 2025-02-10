@@ -24,5 +24,10 @@ class Kota extends Model
     {
         return $this->hasMany(Penyewaan::class);
     }
+
+    public function wishlist ()
+    {
+        return $this->hasMany(Wishlist::class);
+    }
     
 }

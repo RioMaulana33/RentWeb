@@ -186,6 +186,7 @@ class PenyewaanController extends Controller
             'kota_id' => 'required|integer',
             'tanggal_mulai' => 'required|date',
             'tanggal_selesai' => 'required|date|after_or_equal:tanggal_mulai',
+            'jam_mulai' => 'required|string', 
         ]);
 
         $availability = $this->checkAvailability(
@@ -209,7 +210,10 @@ class PenyewaanController extends Controller
             'tanggal_mulai' => 'required|date',
             'tanggal_selesai' => 'required|date|after_or_equal:tanggal_mulai',
             'jam_mulai' => 'required|string',
-            // ... other validation rules
+            'delivery_id' => 'required|integer',
+            'rental_option' => 'required|string',
+            'total_biaya' => 'required|numeric',
+            'alamat_pengantaran' => 'nullable|string'
         ]);
 
         // Check car availability including maintenance periods

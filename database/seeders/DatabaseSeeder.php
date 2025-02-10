@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
 
             MobilSeeder::class,
             DeliverySeeder::class,
+            RentaloptionSeeder::class,
             KotaSeeder::class,
             StokMobilSeeder::class
         ]);

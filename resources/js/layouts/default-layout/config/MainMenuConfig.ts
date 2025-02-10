@@ -70,6 +70,11 @@ const MainMenuConfig: Array<MenuItem> = [
                         route: "/dashboard/master/delivery",
                     },
                     {
+                        heading: "Opsi Rental",
+                        name: "master-rentaloption",
+                        route: "/dashboard/master/rentaloption",
+                    },
+                    {
                         heading: "Kota",
                         name: "master-kota",
                         route: "/dashboard/master/kota",

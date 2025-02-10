@@ -2,6 +2,8 @@
 
     use App\Http\Controllers\AuthController;
     use App\Http\Controllers\DeliveryController;
+    use App\Http\Controllers\RentaloptionController;
+    use App\Http\Controllers\WishlistController;
     use App\Http\Controllers\KotaController;
     use App\Http\Controllers\UserController;
     use App\Http\Controllers\RoleController;
@@ -100,6 +102,16 @@
             Route::delete('/delivery/destroy/{uuid}', [DeliveryController::class, 'destroy']);
         });
 
+        Route::prefix('rentaloption')->group(function () {
+            Route::get('/get', [RentaloptionController::class, 'get']);
+            Route::get('/rentaloption/get/{uuid}', [RentaloptionController::class, 'get']);
+            Route::post('', [RentaloptionController::class, 'index']);
+            Route::post('/store', [RentaloptionController::class, 'add']);
+            Route::get('/rentaloption/edit/{uuid}', [RentaloptionController::class, 'edit']);
+            Route::put('/rentaloption/update/{uuid}', [RentaloptionController::class, 'update']);
+            Route::delete('/rentaloption/destroy/{uuid}', [RentaloptionController::class, 'destroy']);
+        });
+
         Route::prefix('stok')->group(function () {
             Route::get('/get', [StokMobilController::class, 'get']);
             Route::get('/stok/get/{uuid}', [StokMobilController::class, 'get']);
@@ -120,6 +132,16 @@
             Route::put('/mobil/update/{uuid}', [MobilController::class, 'update']);
             Route::delete('/mobil/destroy/{uuid}', [MobilController::class, 'destroy']);
         });
+
+        Route::prefix('wishlist')->group(function () {
+            Route::get('/get', [WishlistController::class, 'get']);
+            Route::post('/user', [WishlistController::class, 'userWishlist']);
+            Route::post('/store', [WishlistController::class, 'add']);
+            Route::get('/wishlist/edit/{uuid}', [WishlistController::class, 'edit']);
+            Route::put('/wishlist/update/{uuid}', [WishlistController::class, 'update']);
+            Route::delete('/wishlist/destroy/{uuid}', [WishlistController::class, 'destroy']);
+        });
+
         Route::prefix('penyewaan')->group(function () {
             Route::get('/get', [PenyewaanController::class, 'get']);
             Route::get('/penyewaan/detail/{uuid}', [PenyewaanController::class, 'detail']);

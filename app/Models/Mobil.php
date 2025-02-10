@@ -32,4 +32,8 @@ class Mobil extends Model
     {
         return $this->hasMany(StokMobil::class);
     }
+    public function wishlist()
+    {
+        return $this->hasMany(Wishlist::class);
+    }
 }

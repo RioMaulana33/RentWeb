@@ -25,20 +25,7 @@ const createActionButtons = (cell: any, isAdmin: boolean) => {
 
     if (isAdmin) {
         // Edit button for admin only
-        buttons.push(
-            h(
-                "button",
-                {
-                    class: "btn btn-sm btn-icon btn-info",
-                    onClick: () => {
-                        selected.value = cell.getValue();
-                        openForm.value = true;
-                    },
-                },
-                h("i", { class: "la la-pencil fs-2" })
-            )
-        );
-
+        
         // Password change button for admin only
         buttons.push(
             h(
@@ -55,6 +42,19 @@ const createActionButtons = (cell: any, isAdmin: boolean) => {
         );
     }
 
+    buttons.push(
+        h(
+            "button",
+            {
+                class: "btn btn-sm btn-icon btn-info",
+                onClick: () => {
+                    selected.value = cell.getValue();
+                    openForm.value = true;
+                },
+            },
+            h("i", { class: "la la-pencil fs-2" })
+        )
+    );
     // Delete button for both admin and customer
     buttons.push(
         h(
@@ -101,10 +101,6 @@ const userColumns = [
     }),
     column.accessor("phone", {
         header: "No. Telp",
-    }),
-    column.accessor("verify_ktp", {
-        header: "KTP",
-        cell: cell => cell.getValue() || '-'
     }),
     column.accessor("uuid", {
         header: "Aksi",

@@ -14,26 +14,30 @@ return new class extends Migration
         Schema::create('penyewaan', function (Blueprint $table) {
             $table->id();
             $table->uuid()->unique();
-            $table->string('kode_penyewaan')->nullable();
             $table->foreignId('user_id')->constrained('users')->restrictOnDelete();
             $table->foreignId('mobil_id')->nullable()->references('id')->on('mobil')->onDelete('cascade');
             $table->foreignId('kota_id')->nullable()->references('id')->on('kota')->onDelete('cascade');
             $table->foreignId('delivery_id')->nullable()->references('id')->on('delivery')->onDelete('cascade');
+            $table->string('kode_penyewaan')->nullable();
             $table->date('tanggal_mulai')->nullable();
             $table->date('tanggal_selesai')->nullable();    
             $table->time('jam_mulai')->nullable();
             $table->string('rental_option')->nullable();
-            $table->enum('status',['pending', 'aktif', 'selesai'])->default('pending');
-            $table->string('payment_status')->nullable(); // Removed after()
-            $table->string('payment_url')->nullable(); // Removed after()
-            $table->string('midtrans_booking_code')->nullable(); // Removed after()
-            $table->string('midtrans_transaction_id')->nullable(); // Removed after()
-            $table->timestamp('payment_time')->nullable(); // Removed after()
-            $table->double('total_biaya')->nullable();
             $table->string('alamat_pengantaran')->nullable();
+            $table->enum('status',['pending', 'aktif', 'selesai'])->default('pending');
+            $table->double('total_biaya')->nullable();
+            $table->decimal('denda', 12, 2)->default(0);
+
+            // // // // // // // // // // // // // // // // // // // // // //
+            $table->string('payment_status')->nullable();
+            $table->string('payment_url')->nullable();
+            $table->string('midtrans_booking_code')->nullable();
+            $table->string('midtrans_transaction_id')->nullable();
+            $table->timestamp('payment_time')->nullable();
+
+
             $table->timestamp('maintenance_end')->nullable(); 
             $table->timestamp('waktu_pengembalian_aktual')->nullable();
-            $table->decimal('denda', 12, 2)->default(0);
             $table->rememberToken();
             $table->timestamps();
         });

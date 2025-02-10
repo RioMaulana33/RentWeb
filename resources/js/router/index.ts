@@ -137,6 +137,16 @@ const routes: Array<RouteRecordRaw> = [
                 },
             },
             {
+                path: "/dashboard/master/rentaloption",
+                name: "dashboard.master.rentaloption",
+                component: () =>
+                    import("@/pages/dashboard/master/rentaloption/Index.vue"),
+                meta: {
+                    pageTitle: "Opsi Rental",
+                    breadcrumbs: ["Master", "Opsi Rental"],
+                },
+            },
+            {
                 path: "/dashboard/master/kota",
                 name: "dashboard.master.kota",
                 component: () =>

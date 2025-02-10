@@ -1,4 +1,4 @@
-<script setup lang="ts">
+api<script setup lang="ts">
 import { block, unblock } from "@/libs/utils";
 import { onMounted, ref, watch, computed } from "vue";
 import * as Yup from "yup";
