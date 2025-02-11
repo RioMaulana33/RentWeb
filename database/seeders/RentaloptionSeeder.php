@@ -16,7 +16,7 @@ class RentaloptionSeeder extends Seeder
         Rentaloption::create([
           'nama' => 'Dengan Supir',
           'deskripsi' => 'Mobil dikendarai oleh sopir profesional',
-          'biaya' => 150000
+          'biaya' => 200000
         ]);
 
         Rentaloption::create([

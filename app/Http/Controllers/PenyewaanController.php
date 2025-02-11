@@ -211,7 +211,7 @@ class PenyewaanController extends Controller
             'tanggal_selesai' => 'required|date|after_or_equal:tanggal_mulai',
             'jam_mulai' => 'required|string',
             'delivery_id' => 'required|integer',
-            'rental_option' => 'required|string',
+            'rentaloptions_id' => 'required|integer',
             'total_biaya' => 'required|numeric',
             'alamat_pengantaran' => 'nullable|string'
         ]);
@@ -262,7 +262,7 @@ class PenyewaanController extends Controller
     public function detail($uuid)
     {
         $base = Penyewaan::where('uuid', $uuid)
-            ->with(['user', 'mobil', 'kota', 'delivery'])
+            ->with(['user', 'mobil', 'kota', 'delivery','rentaloption'])
             ->first();
         return response()->json([
             'success' => true,
@@ -283,9 +283,9 @@ class PenyewaanController extends Controller
         $request->validate([
             'mobil_id' => 'required',
             'delivery_id' => 'required',
+            'rentaloptions_id' => 'required',
             'tanggal_mulai' => 'required|date',
             'tanggal_selesai' => 'required|date',
-            'rental_option' => 'required|string',
             'status' => 'required|in:aktif,pending,selesai',
         ]);
 
@@ -293,7 +293,7 @@ class PenyewaanController extends Controller
         $Penyewaaan->update($request->only([
             'tanggal_mulai',
             'tanggal_selesai',
-            'rental_option',
+            'rentaloptions_id',
             'status',
             'total_biaya',
             'alamat_pengantaran',

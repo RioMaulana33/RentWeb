@@ -4,10 +4,11 @@ import { onMounted, ref, watch, computed } from "vue";
 import * as Yup from "yup";
 import axios from "@/libs/axios";
 import { toast } from "vue3-toastify";
-import type { User, Role, Mobil } from "@/types";
+import type { User, Role, Mobil , Delivery, Rentaloption } from "@/types";
 import ApiService from "@/core/services/ApiService";
 import { useMobil } from "@/services/useMobil";
 import { useDelivery } from "@/services/useDelivery";
+import { useRentaloption } from "@/services/useRentaloption";
 import dayjs from 'dayjs';
 
 const props = defineProps({
@@ -32,7 +33,7 @@ const formSchema = Yup.object().shape({
     tanggal_selesai: Yup.string().required("Tanggal Selesai harus diisi"),
     // jam_mulai: Yup.string().required("Jam Mulai harus diisi"),
     status: Yup.string().required("Status Mobil harus diisi"),
-    rental_option: Yup.string().required("Opsi harus diisi"),
+    // rental_option: Yup.string().required("Opsi harus diisi"),
 });
 
 function getEdit() {
@@ -127,11 +128,11 @@ async function submit() {
     formData.append("kota_id", user.value.kota_id);
     formData.append("mobil_id", user.value.mobil_id);
     formData.append("delivery_id", user.value.delivery_id);
+    formData.append("rentaloptions_id", user.value.rentaloptions_id);
     formData.append("tanggal_mulai", user.value.tanggal_mulai);
     formData.append("tanggal_selesai", user.value.tanggal_selesai);
     formData.append("jam_mulai", user.value.jam_mulai);
     formData.append("status", user.value.status);
-    formData.append("rental_option", user.value.rental_option);
     formData.append("total_biaya", user.value.total_biaya);
     formData.append("alamat_pengantaran", user.value.alamat_pengantaran);
 
@@ -176,6 +177,13 @@ const mobil = computed(() =>
 const Delivery = useDelivery();
 const delivery = computed(() =>
     Delivery.data.value?.map((item: Delivery) => ({
+        id: item.id,
+        text: item.nama,
+    }))
+);
+const Rentaloption = useRentaloption();
+const rentaloption = computed(() =>
+    Rentaloption.data.value?.map((item: Rentaloption) => ({
         id: item.id,
         text: item.nama,
     }))
@@ -371,18 +379,16 @@ watch(
                 <div class="col-md-6">
                     <div class="fv-row mb-7">
                         <label class="form-label fw-bold fs-6 required">
-                            Rental Option
+                            Pilih Opsi Rental
                         </label>
-                        <Field name="rental_option" type="hidden" v-model="user.rental_option">
-                            <select2 placeholder="Pilih Rental Option" class="form-select-solid" :options="[
-                                { id: 'Dengan Supir', text: 'Dengan Supir' },
-                                { id: 'Lepas Kunci', text: 'Lepas Kunci' },
-                            ]" name="rental_option" v-model="user.rental_option">
+                        <Field name="rentaloptions_id" type="hidden" v-model="user.rentaloptions_id">
+                            <select2 placeholder="Pilih Metode" class="form-select-solid" :options="rentaloption"
+                                name="rentaloptions_id" v-model="user.rentaloptions_id">
                             </select2>
                         </Field>
                         <div class="fv-plugins-message-container">
                             <div class="fv-help-block">
-                                <ErrorMessage name="rental_option" />
+                                <ErrorMessage name="rentaloptions_id" />
                             </div>
                         </div>
                     </div>

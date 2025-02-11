@@ -18,11 +18,11 @@ return new class extends Migration
             $table->foreignId('mobil_id')->nullable()->references('id')->on('mobil')->onDelete('cascade');
             $table->foreignId('kota_id')->nullable()->references('id')->on('kota')->onDelete('cascade');
             $table->foreignId('delivery_id')->nullable()->references('id')->on('delivery')->onDelete('cascade');
+            $table->foreignId('rentaloptions_id')->nullable()->references('id')->on('rentaloptions')->onDelete('cascade');
             $table->string('kode_penyewaan')->nullable();
             $table->date('tanggal_mulai')->nullable();
             $table->date('tanggal_selesai')->nullable();    
             $table->time('jam_mulai')->nullable();
-            $table->string('rental_option')->nullable();
             $table->string('alamat_pengantaran')->nullable();
             $table->enum('status',['pending', 'aktif', 'selesai'])->default('pending');
             $table->double('total_biaya')->nullable();

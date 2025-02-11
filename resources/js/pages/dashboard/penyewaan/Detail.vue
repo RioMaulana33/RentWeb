@@ -162,13 +162,13 @@ const getStatusBadge = (status: string) => {
                                     </div>
                                     <div class="col-md-6">
                                         <div class="mb-4">
-                                            <label class="text-gray-400 mb-1 d-block">Delivery Option</label>
+                                            <label class="text-gray-400 mb-1 d-block">Metode</label>
                                             <span class="">{{ rental.delivery?.nama }}</span>
                                         </div>
                                        
                                         <div class="mb-4">
-                                            <label class="text-gray-400 mb-1 d-block">Rental Option</label>
-                                            <span class="">{{ rental.rental_option }}</span>
+                                            <label class="text-gray-400 mb-1 d-block">Opsi Rental</label>
+                                            <span class="">{{ rental.rentaloption?.nama }}</span>
                                         </div>
                                         <div>
                                             <label class="text-gray-400 mb-1 d-block">Total Biaya</label>

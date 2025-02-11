@@ -30,7 +30,7 @@ import {
                             themeMode === 'light' && layout === 'light-header'
                         "
                         alt="Logo"
-                        :src="getAssetPath('media/logos/default.svg')"
+                        :src="getAssetPath('media/misc/logoz.png')"
                         class="h-20px h-lg-30px app-sidebar-logo-default theme-light-show"
                     />
                     <img
@@ -39,7 +39,7 @@ import {
                             (themeMode === 'dark' && layout === 'light-header')
                         "
                         alt="Logo"
-                        :src="getAssetPath('media/logos/default-dark.svg')"
+                        :src="getAssetPath('media/misc/logoz.png')"
                         class="h-20px h-lg-30px app-sidebar-logo-default"
                     />
                 </router-link>
@@ -69,7 +69,7 @@ import {
                     <router-link to="/" class="d-lg-none">
                         <img
                             alt="Logo"
-                            :src="getAssetPath('media/logos/default-small.svg')"
+                            :src="getAssetPath('/media/misc/logoz.png')"
                             class="h-30px"
                         />
                     </router-link>

@@ -29,7 +29,7 @@ const formSchema = Yup.object().shape({
 
 function getEdit() {
     block(document.getElementById("form-user"));
-    ApiService.get("delivery/delivery/edit", props.selected)
+    ApiService.get("rentaloption/rentaloption/edit", props.selected)
         .then(({ data }) => {
             user.value = data.data;
         })
@@ -55,8 +55,8 @@ function submit() {
     axios({
         method: "post",
         url: props.selected
-            ? `/delivery/delivery/update/${props.selected}`
-            : "/delivery/store",
+            ? `/rentaloption/rentaloption/update/${props.selected}`
+            : "/rentaloption/store",
         data: formData,
         headers: {
             "Content-Type": "multipart/form-data",
@@ -142,7 +142,7 @@ watch(
         ref="formRef"
     >
         <div class="card-header align-items-center">
-            <h2 class="mb-0">{{ selected ? "Edit" : "Tambah" }} Delivery </h2>
+            <h2 class="mb-0">{{ selected ? "Edit" : "Tambah" }} Opsi Rental </h2>
             <button
                 type="button"
                 class="btn btn-sm btn-light-danger ms-auto"

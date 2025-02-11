@@ -18,10 +18,10 @@ class Penyewaan extends Model
         'mobil_id',
         'kota_id',
         'delivery_id',
+        'rentaloptions_id',
         'tanggal_mulai',
         'tanggal_selesai',
         'jam_mulai',
-        'rental_option',
         'status',
         'total_biaya',
         'alamat_pengantaran',
@@ -38,14 +38,16 @@ class Penyewaan extends Model
     {
         return $this->belongsTo(Kota::class, 'kota_id');
     }
-
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
     public function Delivery()
     {
         return $this->belongsTo(Delivery::class, 'delivery_id');
     }
-
-    public function user()
+    public function RentalOption()
     {
-        return $this->belongsTo(User::class, 'user_id');
+        return $this->belongsTo(Rentaloption::class, 'rentaloptions_id');
     }
 }
