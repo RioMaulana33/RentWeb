@@ -16,6 +16,8 @@ return new class extends Migration
             $table->uuid()->unique();
             $table->string('nama')->unique(); 
             $table->text('alamat')->nullable();
+            $table->decimal('latitude', 10, 8)->nullable();
+            $table->decimal('longitude', 11, 8)->nullable();
             $table->text('deskripsi')->nullable(); 
             $table->string('foto')->nullable();
             $table->timestamps();

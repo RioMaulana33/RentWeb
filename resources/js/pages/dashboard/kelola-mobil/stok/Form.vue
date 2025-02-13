@@ -21,10 +21,18 @@ const emit = defineEmits(["close", "refresh"]);
 const user = ref<User>({} as User);
 const formRef = ref();
 
-const formSchema = Yup.object().shape({
-    mobil_id: Yup.string().required("Mobil harus diisi"),
-    kota_id: Yup.string().required("Kota harus diisi"),
-    stok: Yup.string().required("Stok harus diisi"),
+// Only require stok validation when editing
+const formSchema = computed(() => {
+    if (props.selected) {
+        return Yup.object().shape({
+            stok: Yup.string().required("Stok harus diisi"),
+        });
+    }
+    return Yup.object().shape({
+        mobil_id: Yup.string().required("Mobil harus diisi"),
+        kota_id: Yup.string().required("Kota harus diisi"),
+        stok: Yup.string().required("Stok harus diisi"),
+    });
 });
 
 function getEdit() {
@@ -40,7 +48,6 @@ function getEdit() {
             unblock(document.getElementById("form-user"));
         });
 }
-
 
 function submit() {
     const formData = new FormData();
@@ -83,7 +90,6 @@ function submit() {
         });
 }
 
-
 const Mobil = useMobil();
 const mobil = computed(() =>
     Mobil.data.value?.map((item: Mobil) => ({
@@ -99,7 +105,6 @@ const kota = computed(() =>
         text: item.nama,
     }))
 );
-
 
 onMounted(async () => {
     if (props.selected) {
@@ -128,15 +133,20 @@ watch(
         </div>
         <div class="card-body">
             <div class="row">
-
                 <div class="col-md-6">
                     <div class="fv-row mb-7">
-                        <label class="form-label fw-bold fs-6 required">
+                        <label class="form-label fw-bold fs-6" :class="{ required: !selected }">
                             Pilih Mobil
                         </label>
                         <Field name="mobil_id" type="hidden" v-model="user.mobil_id">
-                            <select2 placeholder="Pilih Mobil" class="form-select-solid" :options="mobil"
-                                name="mobil_id" v-model="user.mobil_id">
+                            <select2 
+                                placeholder="Pilih Mobil" 
+                                class="form-select-solid" 
+                                :options="mobil"
+                                name="mobil_id" 
+                                v-model="user.mobil_id"
+                                :disabled="!!selected"
+                            >
                             </select2>
                         </Field>
                         <div class="fv-plugins-message-container">
@@ -149,12 +159,18 @@ watch(
 
                 <div class="col-md-6">
                     <div class="fv-row mb-7">
-                        <label class="form-label fw-bold fs-6 required">
+                        <label class="form-label fw-bold fs-6" :class="{ required: !selected }">
                             Pilih Kota
                         </label>
                         <Field name="kota_id" type="hidden" v-model="user.kota_id">
-                            <select2 placeholder="Pilih Kota" class="form-select-solid" :options="kota" name="kota_id"
-                                v-model="user.kota_id">
+                            <select2 
+                                placeholder="Pilih Kota" 
+                                class="form-select-solid" 
+                                :options="kota" 
+                                name="kota_id"
+                                v-model="user.kota_id"
+                                :disabled="!!selected"
+                            >
                             </select2>
                         </Field>
                         <div class="fv-plugins-message-container">

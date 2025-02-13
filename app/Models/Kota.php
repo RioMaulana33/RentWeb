@@ -12,7 +12,7 @@ class Kota extends Model
 
     protected $table  = 'kota';
 
-    protected $fillable = ['nama', 'alamat', 'deskripsi', 'foto'];
+    protected $fillable = ['nama', 'alamat', 'deskripsi', 'foto', 'latitude','longitude'];
 
     public function stokmobil ()
     {

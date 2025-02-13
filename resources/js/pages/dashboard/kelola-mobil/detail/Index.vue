@@ -20,6 +20,24 @@ const columns = [
     column.accessor("no", {
         header: "No",
     }),
+    column.accessor("foto", {
+    header: "Foto mobil",
+    cell: cell => {
+        const fotoPath = cell.getValue();
+
+        // Cek jika fotoPath ada, jika tidak, tampilkan placeholder atau penanganan default
+        if (!fotoPath) {
+            return h('img', { src: `/storage/mobil/${cell.getValue()}`, width: 150 });
+        }
+
+        // Jika path dimulai dengan '/media', gunakan langsung
+        const imageUrl = fotoPath.startsWith('/media')
+            ? fotoPath
+            : `/storage/${fotoPath}`;
+
+        return h('img', { src: imageUrl, width: 150 });
+    }
+}),
     column.accessor("merk", {
         header: "Merk",
     }),
@@ -47,24 +65,7 @@ const columns = [
     column.accessor("bahan_bakar", {
         header: "Bahan Bakar",
     }),
-    column.accessor("foto", {
-    header: "Foto mobil",
-    cell: cell => {
-        const fotoPath = cell.getValue();
-
-        // Cek jika fotoPath ada, jika tidak, tampilkan placeholder atau penanganan default
-        if (!fotoPath) {
-            return h('img', { src: `/storage/mobil/${cell.getValue()}`, width: 150 });
-        }
-
-        // Jika path dimulai dengan '/media', gunakan langsung
-        const imageUrl = fotoPath.startsWith('/media')
-            ? fotoPath
-            : `/storage/${fotoPath}`;
-
-        return h('img', { src: imageUrl, width: 150 });
-    }
-}),
+   
 
     column.accessor("uuid", {
         header: "Aksi",

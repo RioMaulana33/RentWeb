@@ -85,6 +85,7 @@
 
         Route::prefix('kota')->group(function () {
             Route::get('/get', [KotaController::class, 'get']);
+            Route::get('/get-by-user', [KotaController::class, 'getByUser']);
             Route::post('', [KotaController::class, 'index']);
             Route::post('/store', [KotaController::class, 'add']);
             Route::get('/kota/edit/{uuid}', [KotaController::class, 'edit']);

@@ -1,7 +1,6 @@
 <template>
   <main class="dashboard-container">
-
-    <!-- Modern Statistics Cards -->
+    <!-- Statistics Cards Row -->
     <div class="row g-5">
       <!-- Active Rentals Card -->
       <div class="col-xl-3 col-md-6">
@@ -18,7 +17,6 @@
                   </i>
                 </span>
               </div>
-
               <div class="d-flex flex-column mb-2">
                 <span class="text-gray-600 fw-semibold fs-7 mb-1">Data Rental Aktif</span>
                 <div class="d-flex align-items-center">
@@ -32,7 +30,6 @@
           </div>
         </div>
       </div>
-
 
       <!-- Total Customers Card -->
       <div class="col-xl-3 col-md-6">
@@ -52,7 +49,6 @@
                 <span class="text-gray-600 fw-semibold fs-7 mb-1">Total Customer</span>
                 <div class="d-flex align-items-center">
                   <span class="badge badge-light-success fs-base">
-                    <i class="ki-duotone ki-arrow-down fs-5 text-danger "></i>
                     {{ stats.totalCustomers }}
                   </span>
                 </div>
@@ -75,12 +71,10 @@
                   </i>
                 </span>
               </div>
-
               <div class="d-flex flex-column mb-2">
                 <span class="text-gray-600 fw-semibold fs-7 mb-1">Rental Selesai</span>
                 <div class="d-flex align-items-center">
                   <span class="badge badge-light-info fs-base">
-                    <i class="ki-duotone ki- fs-5 text-info "></i>
                     {{ stats.completedRentals }}
                   </span>
                 </div>
@@ -108,9 +102,7 @@
                 <span class="text-gray-600 fw-semibold fs-7 mb-1">Total Pendapatan</span>
                 <div class="d-flex align-items-center">
                   <span class="badge badge-light-warning fs-base">
-                    <i class="ki-duotone ki-arrow-up fs-5 text-success "></i>
                     {{ formatCurrency(stats.totalRevenue) }}
-
                   </span>
                 </div>
               </div>
@@ -120,17 +112,11 @@
       </div>
     </div>
 
-    <!-- Additional Statistics Section -->
+    <!-- Chart Section -->
     <div class="row g-5 mt-2 mb-8">
-      <!-- Chart Card -->
       <div class="card shadow-sm">
         <div class="card-header border-0">
           <h3 class="card-title fw-bold">Statistik Rental & Pengguna</h3>
-          <!-- <div class="card-toolbar">
-            <button type="button" class="btn btn-sm btn-light" @click="exportData">
-              Export Data
-            </button>
-          </div> -->
         </div>
         <div class="card-body pt-4">
           <div ref="apexChart" style="min-height: 350px;"></div>
@@ -142,12 +128,13 @@
 
 <script>
 import axios from "@/libs/axios";
-import Chart from 'chart.js/auto';
 import ApexCharts from 'apexcharts';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, startOfYear, endOfYear } from 'date-fns';
 import { id as idLocale } from 'date-fns/locale';
 
 export default {
+  name: 'DashboardComponent',
+  
   data() {
     return {
       stats: {
@@ -162,6 +149,7 @@ export default {
       userData: []
     }
   },
+
   methods: {
     formatCurrency(value) {
       return new Intl.NumberFormat('id-ID', {
@@ -173,26 +161,17 @@ export default {
 
     async fetchDashboardStats() {
       try {
-        // Fetch rental data
-        const rentalResponse = await axios.get('/penyewaan/get');
-        const rentals = rentalResponse.data.data;
-        this.rentalData = rentals;
+        const [rentalResponse, userResponse] = await Promise.all([
+          axios.get('/penyewaan/get'),
+          axios.get('master/users')
+        ]);
 
-        // Fetch user data 
-        const userResponse = await axios.get('master/users'); // Adjust endpoint as needed
-        const users = userResponse.data.data;
-        this.userData = users;
+        this.rentalData = rentalResponse.data.data;
+        this.userData = userResponse.data.data;
 
-        this.stats.activeRentals = rentals.filter(rental => rental.status === 'aktif').length;
-        this.stats.completedRentals = rentals.filter(rental => rental.status === 'selesai').length;
-
-        const uniqueCustomers = new Set(rentals.map(rental => rental.user_id));
-        this.stats.totalCustomers = uniqueCustomers.size;
-
-        this.stats.totalRevenue = rentals
-          .filter(rental => rental.status === 'selesai')
-          .reduce((sum, rental) => sum + (rental.total_biaya || 0), 0);
-
+        // Calculate statistics
+        this.calculateStats();
+        // Initialize or update chart
         this.initializeChart();
 
       } catch (error) {
@@ -202,74 +181,89 @@ export default {
       }
     },
 
-    processChartData() {
+    calculateStats() {
+      // Calculate active rentals
+      this.stats.activeRentals = this.rentalData.filter(
+        rental => rental.status === 'aktif'
+      ).length;
+
+      // Calculate completed rentals
+      this.stats.completedRentals = this.rentalData.filter(
+        rental => rental.status === 'selesai'
+      ).length;
+
+      // Calculate unique customers
+      const uniqueCustomers = new Set(
+        this.rentalData.map(rental => rental.user_id)
+      );
+      this.stats.totalCustomers = uniqueCustomers.size;
+
+      // Calculate total revenue
+      this.stats.totalRevenue = this.rentalData
+        .filter(rental => rental.status === 'selesai')
+        .reduce((sum, rental) => sum + (rental.total_biaya || 0), 0);
+    },
+
+    generateMonthlyData() {
+      const currentYear = new Date().getFullYear();
       const monthlyData = {};
 
-      // Process rental data
+      // Initialize all months
+      for (let month = 0; month < 12; month++) {
+        const date = new Date(currentYear, month, 1);
+        const monthKey = format(date, 'yyyy-MM');
+        monthlyData[monthKey] = {
+          totalRentals: 0,
+          userCount: 0
+        };
+      }
+
+      // Process rental data for current year
       this.rentalData.forEach(rental => {
         const date = parseISO(rental.tanggal_mulai);
-        const monthYear = format(date, 'yyyy-MM');
-
-        if (!monthlyData[monthYear]) {
-          monthlyData[monthYear] = {
-            totalRentals: 0
-          };
+        if (date.getFullYear() === currentYear) {
+          const monthKey = format(date, 'yyyy-MM');
+          if (monthlyData[monthKey]) {
+            monthlyData[monthKey].totalRentals++;
+          }
         }
-
-        monthlyData[monthYear].totalRentals++;
       });
 
-      // Process user data (only users with 'user' role)
+      // Process user data for current year
       const userRoleUsers = this.userData.filter(user =>
-        user.roles && user.roles.some(role => role.name === 'user')
+        user.roles?.some(role => role.name === 'user')
       );
 
       userRoleUsers.forEach(user => {
         const date = parseISO(user.created_at);
-        const monthYear = format(date, 'yyyy-MM');
-
-        if (!monthlyData[monthYear]) {
-          monthlyData[monthYear] = {
-            totalRentals: 0
-          };
+        if (date.getFullYear() === currentYear) {
+          const monthKey = format(date, 'yyyy-MM');
+          if (monthlyData[monthKey]) {
+            monthlyData[monthKey].userCount++;
+          }
         }
       });
 
-      const sortedMonths = Object.keys(monthlyData).sort();
-
-      return {
-        labels: sortedMonths.map(month => {
-          const [year, monthNum] = month.split('-');
-          return format(new Date(year, monthNum - 1), 'MMM', { locale: idLocale });
-        }),
-        totalRentals: sortedMonths.map(month => monthlyData[month].totalRentals),
-        userCount: sortedMonths.map(month =>
-          this.userData.filter(user =>
-            user.roles && user.roles.some(role => role.name === 'user') &&
-            format(parseISO(user.created_at), 'yyyy-MM') === month
-          ).length
-        )
-      };
+      return monthlyData;
     },
-
-
 
     initializeChart() {
       if (this.chart) {
         this.chart.destroy();
       }
 
-      const chartData = this.processChartData();
+      const monthlyData = this.generateMonthlyData();
+      const sortedMonths = Object.keys(monthlyData).sort();
 
       const options = {
         series: [
           {
             name: 'Total Penyewaan',
-            data: chartData.totalRentals
+            data: sortedMonths.map(month => monthlyData[month].totalRentals)
           },
           {
             name: 'Jumlah Customer',
-            data: chartData.userCount
+            data: sortedMonths.map(month => monthlyData[month].userCount)
           }
         ],
         chart: {
@@ -277,6 +271,9 @@ export default {
           height: 350,
           toolbar: {
             show: false
+          },
+          zoom: {
+            enabled: false
           }
         },
         colors: ['#3699FF', '#1BC5BD'],
@@ -288,7 +285,9 @@ export default {
           width: 3
         },
         xaxis: {
-          categories: chartData.labels,
+          categories: sortedMonths.map(month => 
+            format(parseISO(month + '-01'), 'MMM', { locale: idLocale })
+          ),
           labels: {
             style: {
               colors: '#6e6b7b'
@@ -299,37 +298,65 @@ export default {
           labels: {
             style: {
               colors: '#6e6b7b'
+            },
+            formatter: function(value) {
+              return Math.round(value);
             }
           }
         },
         tooltip: {
-          theme: 'light'
+          theme: 'light',
+          x: {
+            formatter: function(value, { series, seriesIndex, dataPointIndex }) {
+              return format(parseISO(sortedMonths[dataPointIndex] + '-01'), 'MMMM yyyy', { locale: idLocale });
+            }
+          }
         },
         legend: {
           position: 'top',
           horizontalAlign: 'left'
+        },
+        grid: {
+          borderColor: '#f1f1f1',
+          padding: {
+            top: 0,
+            right: 0,
+            bottom: 0,
+            left: 0
+          }
+        },
+        fill: {
+          opacity: 0.3,
+          type: 'gradient',
+          gradient: {
+            shade: 'light',
+            type: 'vertical',
+            opacityFrom: 0.4,
+            opacityTo: 0.1,
+            stops: [0, 100]
+          }
         }
       };
 
       this.chart = new ApexCharts(this.$refs.apexChart, options);
       this.chart.render();
-    },
-
-    exportData() {
-      console.log('Export data clicked');
     }
   },
+
   mounted() {
     this.fetchDashboardStats();
-    setInterval(this.fetchDashboardStats, 300000);
+    // Refresh data every 5 minutes
+    this.refreshInterval = setInterval(this.fetchDashboardStats, 300000);
   },
+
   beforeDestroy() {
     if (this.chart) {
       this.chart.destroy();
     }
+    if (this.refreshInterval) {
+      clearInterval(this.refreshInterval);
+    }
   }
-
-
 }
 </script>
 

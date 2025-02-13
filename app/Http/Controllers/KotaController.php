@@ -8,6 +8,7 @@ use App\Models\Kota;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class KotaController extends Controller
 {
@@ -28,19 +29,55 @@ class KotaController extends Controller
 
     public function add(Request $request)
     {
-        // simpan data
         $base = Kota::create([
-           'nama'  => $request->input('nama'),
-           'alamat'  => $request->input('alamat'),
-           'deskripsi'  => $request->input('deskripsi'),
+            'nama' => $request->input('nama'),
+            'alamat' => $request->input('alamat'),
+            'deskripsi' => $request->input('deskripsi'),
+            'latitude' => $request->input('latitude'),
+            'longitude' => $request->input('longitude'),
         ]);
-
-        //response
+    
         return response()->json([
             'status' => true,
             'message' => 'Data Kota telah disimpan'
         ]);
     }
+    
+    public function update($uuid, Request $request)
+    {
+        $kota = Kota::findByUuid($uuid);
+        
+        $request->validate([
+            'nama' => 'required|string',
+            'alamat' => 'required|string',
+            'latitude' => 'required|numeric',
+            'longitude' => 'required|numeric',
+        ]);
+    
+        $kota->update([
+            'nama' => $request->nama,
+            'alamat' => $request->alamat,
+            'deskripsi' => $request->deskripsi,
+            'latitude' => $request->latitude,
+            'longitude' => $request->longitude,
+        ]);
+    
+        if ($request->hasFile('foto')) {
+            if ($kota->foto) {
+                Storage::delete(str_replace('public/', '', $kota->foto));
+            }
+            
+            $kota->update([
+                'foto' => str_replace('public/', '', $request->file('foto')->store('public/kota')),
+            ]);
+        }
+    
+        return response()->json([
+            'status' => true,
+            'message' => 'Data berhasil diubah'
+        ]);
+    }
+
     public function edit($uuid)
     {
         $base = Kota::findByUuid($uuid);
@@ -50,48 +87,25 @@ class KotaController extends Controller
         ], 200);
     }
 
+    public function getByUser()
+    {
+        $user = Auth::user();
+        
+        if ($user->hasRole('admin-kota')) {
+            $kota = Kota::where('nama', $user->name)->get();
+        } else {
+            $kota = Kota::all();
+        }
+
+        return response()->json([
+            'status' => true,
+            'data' => $kota
+        ]);
+    }
+
     public function get()
     {
         return response()->json(['data' => Kota::all()]);
-    }
-
-
-
-    public function update($uuid, Request $request)
-    {
-        $Kota = Kota::findByUuid($uuid);
-        $Kota->update($request->all());
-    
-        $request->validate([
-            'nama' => 'required|string',
-            'alamat' => 'required|string',
-        ]);
-    
-        // Update data umum
-        $Kota->update($request->only([
-            'nama',
-            'alamat',
-            'deskripsi',
-        ]));
-
-         // Jika ada file foto yang diunggah, lakukan update
-         if ($request->hasFile('foto')) {
-            // Hapus foto lama jika ada
-            if ($Kota->foto) {
-                Storage::delete(str_replace('public/', '', $Kota->foto));
-            }
-    
-            // Simpan file foto baru
-            $Kota->update([
-                'foto' => str_replace('public/', '', $request->file('foto')->store('public/kota')),
-            ]);
-        }
-    
-    
-        return response()->json([
-            'status' => 'true',
-            'message' => 'Data berhasil diubah'
-        ]);
     }
     
     public function destroy($uuid)
