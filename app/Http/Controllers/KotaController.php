@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class KotaController extends Controller
 {
@@ -29,10 +30,28 @@ class KotaController extends Controller
 
     public function add(Request $request)
     {
+        $validated = $request->validate([
+            'nama' => 'required|string',
+            'alamat' => 'required|string',
+            'latitude' => 'required|numeric',
+            'longitude' => 'required|numeric',
+        ]);
+    
+        // Check if city name already exists
+        $existing = Kota::where('nama', $validated['nama'])->first();
+    
+        if ($existing) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Nama kota sudah ada!',
+            ], 422);
+        }
+    
         $base = Kota::create([
             'nama' => $request->input('nama'),
             'alamat' => $request->input('alamat'),
             'deskripsi' => $request->input('deskripsi'),
+            'foto' => str_replace('public/', '', $request->file('foto')->store('public/kota')),
             'latitude' => $request->input('latitude'),
             'longitude' => $request->input('longitude'),
         ]);
@@ -47,12 +66,24 @@ class KotaController extends Controller
     {
         $kota = Kota::findByUuid($uuid);
         
-        $request->validate([
+        $validated = $request->validate([
             'nama' => 'required|string',
             'alamat' => 'required|string',
             'latitude' => 'required|numeric',
             'longitude' => 'required|numeric',
         ]);
+    
+        // Check if city name exists but ignore current record
+        $existing = Kota::where('nama', $validated['nama'])
+            ->where('id', '!=', $kota->id)
+            ->first();
+    
+        if ($existing) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Nama kota sudah ada!',
+            ], 422);
+        }
     
         $kota->update([
             'nama' => $request->nama,

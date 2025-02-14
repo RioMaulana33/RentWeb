@@ -1,4 +1,5 @@
-api<script setup lang="ts">
+api
+<script setup lang="ts">
 import { block, unblock } from "@/libs/utils";
 import { onMounted, ref, watch, computed } from "vue";
 import * as Yup from "yup";
@@ -6,6 +7,7 @@ import axios from "@/libs/axios";
 import { toast } from "vue3-toastify";
 import type { User, Role } from "@/types";
 import ApiService from "@/core/services/ApiService";
+import LeafletMapSelector from "@/components/LeafletMapSelector.vue";
 
 const props = defineProps({
     selected: {
@@ -16,7 +18,15 @@ const props = defineProps({
 
 const emit = defineEmits(["close", "refresh"]);
 
-const user = ref<User>({} as User);
+const user = ref({
+    nama: '',
+    alamat: '',
+    deskripsi: '',
+    foto: null,
+    latitude: 0.0000,
+    longitude: 109.3333
+});
+
 const fileTypes = ref(["image/jpeg", "image/png", "image/jpg"]);
 const foto = ref<any>([]);
 const formRef = ref();
@@ -25,8 +35,22 @@ const formSchema = Yup.object().shape({
     nama: Yup.string()
         .required("Nama harus diisi")
         .matches(/^[a-zA-Z\s]+$/, "Nama kota hanya boleh berisi huruf"),
-    alamat: Yup.string().required("Alamat harus diisi"),
-    
+    alamat: Yup.string()
+});
+
+
+watch([() => user.value.latitude, () => user.value.longitude], async ([newLat, newLng]) => {
+    if (newLat && newLng) {
+        try {
+            const response = await fetch(
+                `https://nominatim.openstreetmap.org/reverse?lat=${newLat}&lon=${newLng}&format=json`
+            );
+            const data = await response.json();
+            user.value.alamat = data.display_name;
+        } catch (error) {
+            console.error('Error getting address:', error);
+        }
+    }
 });
 
 
@@ -46,19 +70,27 @@ function getEdit() {
 }
 
 function submit() {
+    if (!user.value.alamat) {
+        toast.error('Silakan pilih lokasi terlebih dahulu');
+        return;
+    }
+
     const formData = new FormData();
 
     formData.append("nama", user.value.nama);
     formData.append("alamat", user.value.alamat);
     formData.append("deskripsi", user.value.deskripsi);
-    formData.append("foto", user.value.foto);
+    formData.append("latitude", user.value.latitude.toString());
+    formData.append("longitude", user.value.longitude.toString());
 
     if (foto.value.length) {
         formData.append("foto", foto.value[0].file);
     }
+
     if (props.selected) {
         formData.append("_method", "PUT");
     }
+
     block(document.getElementById("form-user"));
     axios({
         method: "post",
@@ -77,8 +109,12 @@ function submit() {
             formRef.value.resetForm();
         })
         .catch((err: any) => {
-            formRef.value.setErrors(err.response.data.errors);
-            toast.error(err.response.data.message);
+            if (err.response.status === 422) {
+                toast.error(err.response.data.message);
+            } else {
+                formRef.value.setErrors(err.response.data.errors);
+                toast.error(err.response.data.message || "Terjadi kesalahan.");
+            }
         })
         .finally(() => {
             unblock(document.getElementById("form-user"));
@@ -129,14 +165,15 @@ watch(
                     </div>
                     <!--end::Input group-->
                 </div>
-                <div class="col-md-6">
-                    <!--begin::Input group-->
+                <div class="col-md-12">
                     <div class="fv-row mb-7">
                         <label class="form-label fw-bold fs-6 required">
-                            Alamat
+                            Lokasi
                         </label>
-                        <Field class="form-control form-control-lg form-control-solid" type="text" name="alamat"
-                            autocomplete="off" v-model="user.alamat" placeholder="Masukkan Alamat" />
+                        <LeafletMapSelector v-model="user.alamat" v-model:latitude="user.latitude"
+                            v-model:longitude="user.longitude" />
+                        <!-- Hidden input untuk alamat -->
+                        <input type="hidden" name="alamat" :value="user.alamat" />
                         <div class="fv-plugins-message-container">
                             <div class="fv-help-block">
                                 <ErrorMessage name="alamat" />

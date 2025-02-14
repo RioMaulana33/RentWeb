@@ -26,7 +26,7 @@ const columns = [
         header: "Alamat",
     }),
     column.accessor("foto", {
-    header: "Foto mobil",
+    header: "Foto",
     cell: cell => {
         const fotoPath = cell.getValue();
 
