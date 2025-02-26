@@ -117,6 +117,11 @@
       <div class="card shadow-sm">
         <div class="card-header border-0">
           <h3 class="card-title fw-bold">Statistik Rental & Pengguna</h3>
+          <div v-if="currentUser" class="d-flex align-items-center">
+            <span class="badge bg-light text-dark">
+              {{ isAdmin ? 'Semua Kota' : currentUser.name }}
+            </span>
+          </div>
         </div>
         <div class="card-body pt-4">
           <div ref="apexChart" style="min-height: 350px;"></div>
@@ -146,7 +151,20 @@ export default {
       loading: true,
       chart: null,
       rentalData: [],
-      userData: []
+      userData: [],
+      currentUser: null,
+      currentKotaId: null,
+      userRoles: []
+    }
+  },
+
+  computed: {
+    isAdmin() {
+      return this.userRoles.includes('admin');
+    },
+    
+    isAdminKota() {
+      return this.userRoles.includes('admin-kota');
     }
   },
 
@@ -159,15 +177,45 @@ export default {
       }).format(value)
     },
 
+    async getCurrentUser() {
+      try {
+        const response = await axios.get('/auth/me');
+        this.currentUser = response.data;
+        
+        // Extract roles from the user data
+        if (this.currentUser && this.currentUser.roles) {
+          this.userRoles = this.currentUser.roles.map(role => role.name);
+        }
+        
+        // If user is admin-kota, get their kota_id
+        if (this.isAdminKota) {
+          const kotaResponse = await axios.get('/kota/get');
+          const kota = kotaResponse.data.data.find(k => k.nama === this.currentUser.name);
+          if (kota) {
+            this.currentKotaId = kota.id;
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching current user:', error);
+      }
+    },
+
     async fetchDashboardStats() {
       try {
+        await this.getCurrentUser();
+        
         const [rentalResponse, userResponse] = await Promise.all([
           axios.get('/penyewaan/get'),
           axios.get('master/users')
         ]);
 
+        // Filter data based on role
         this.rentalData = rentalResponse.data.data;
         this.userData = userResponse.data.data;
+        
+        if (this.isAdminKota && this.currentKotaId) {
+          this.rentalData = this.rentalData.filter(rental => rental.kota_id === this.currentKotaId);
+        }
 
         // Calculate statistics
         this.calculateStats();
@@ -218,8 +266,10 @@ export default {
         };
       }
 
-      // Process rental data for current year
-      this.rentalData.forEach(rental => {
+      // Filter rental data based on role and process for current year
+      const filteredRentalData = this.rentalData;
+      
+      filteredRentalData.forEach(rental => {
         const date = parseISO(rental.tanggal_mulai);
         if (date.getFullYear() === currentYear) {
           const monthKey = format(date, 'yyyy-MM');
@@ -229,12 +279,18 @@ export default {
         }
       });
 
-      // Process user data for current year
-      const userRoleUsers = this.userData.filter(user =>
+      // Filter user data based on role and process for current year
+      let filteredUserData = this.userData.filter(user =>
         user.roles?.some(role => role.name === 'user')
       );
+      
+      // If admin-kota, filter users from their city by looking at their rentals
+      if (this.isAdminKota && this.currentKotaId) {
+        const userIdsInCity = new Set(this.rentalData.map(rental => rental.user_id));
+        filteredUserData = filteredUserData.filter(user => userIdsInCity.has(user.id));
+      }
 
-      userRoleUsers.forEach(user => {
+      filteredUserData.forEach(user => {
         const date = parseISO(user.created_at);
         if (date.getFullYear() === currentYear) {
           const monthKey = format(date, 'yyyy-MM');

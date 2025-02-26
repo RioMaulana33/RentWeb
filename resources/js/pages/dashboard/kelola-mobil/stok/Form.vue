@@ -20,6 +20,8 @@ const emit = defineEmits(["close", "refresh"]);
 
 const user = ref<User>({} as User);
 const formRef = ref();
+const userKota = ref<Kota | null>(null);
+const isAdminKota = ref(false);
 
 // Only require stok validation when editing
 const formSchema = computed(() => {
@@ -34,6 +36,32 @@ const formSchema = computed(() => {
         stok: Yup.string().required("Stok harus diisi"),
     });
 });
+
+// Function to check the user's role
+async function checkUserRole() {
+    try {
+        const response = await ApiService.get("kota/check-role");
+        isAdminKota.value = response.data.role === 'admin-kota';
+    } catch (err: any) {
+        toast.error(err.response?.data?.message || "Gagal mengecek role");
+    }
+}
+
+// New function to get user's kota
+async function getUserKota() {
+    try {
+        const response = await ApiService.get("kota/get-by-user");
+        if (response.data.data && response.data.data.length > 0) {
+            userKota.value = response.data.data[0];
+            // Automatically set the kota_id when we get the user's kota
+            if (isAdminKota.value) {
+                user.value.kota_id = userKota.value.id;
+            }
+        }
+    } catch (err: any) {
+        toast.error(err.response?.data?.message || "Gagal mengambil data kota");
+    }
+}
 
 function getEdit() {
     block(document.getElementById("form-user"));
@@ -107,16 +135,23 @@ const kota = computed(() =>
 );
 
 onMounted(async () => {
-    if (props.selected) {
+    await checkUserRole();
+    
+    if (!props.selected) {
+        // Only get and set user's kota when adding new record
+        await getUserKota();
+    } else {
         getEdit();
     }
 });
 
 watch(
     () => props.selected,
-    () => {
+    async () => {
         if (props.selected) {
             getEdit();
+        } else {
+            await getUserKota();
         }
     }
 );
@@ -169,7 +204,7 @@ watch(
                                 :options="kota" 
                                 name="kota_id"
                                 v-model="user.kota_id"
-                                :disabled="!!selected"
+                                :disabled="isAdminKota"
                             >
                             </select2>
                         </Field>

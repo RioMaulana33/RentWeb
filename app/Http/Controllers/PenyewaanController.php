@@ -6,16 +6,18 @@ use Illuminate\Http\Request;
 use App\Models\Penyewaan;
 use App\Models\StokMobil;
 
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Database\Eloquent\Builder;
 use Carbon\Carbon;
-use App\Helpers\RentalHelper;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Kota;
-use App\Models\User;
+
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+
+use App\Excel\PenyewaanReportExcel;
+
 
 class PenyewaanController extends Controller
 {
@@ -27,15 +29,24 @@ class PenyewaanController extends Controller
 
         DB::statement('set @no=0+' . $page * $per);
 
-        $query = Penyewaan::with(['mobil', 'delivery', 'user', 'kota'])->when($request->status != '-', function ($q) use ($request) {
-            $q->where('status', $request->status);
-        });
+        $query = Penyewaan::with(['mobil', 'delivery', 'user', 'kota'])
+            ->when($request->status != '-', function ($q) use ($request) {
+                $q->where('status', $request->status);
+            });
+
+        if ($request->start_date && $request->end_date) {
+            $query->whereDate('created_at', '>=', $request->start_date)
+                ->whereDate('created_at', '<=', $request->end_date);
+        }
+
+        if ($request->tahun) {
+            $query->whereYear('created_at', $request->tahun);
+        }
 
         if ($adminUser->hasRole('admin-kota')) {
             $kotaId = Kota::where('nama', $adminUser->name)->first()->id;
             $query->where('kota_id', $kotaId);
         }
-
         if ($request->search) {
             $query->where(function ($query) use ($request) {
                 $search = '%' . $request->search . '%';
@@ -57,6 +68,118 @@ class PenyewaanController extends Controller
             ->paginate($per, ['*', DB::raw('@no := @no + 1 AS no')]);
 
         return response()->json($data);
+    }
+
+    public function downloadExcel(Request $request)
+    {
+        while (ob_get_level()) {
+            ob_end_clean();
+        }
+        
+        try {
+            $spreadsheet = new Spreadsheet();
+            $sheet = $spreadsheet->getActiveSheet();
+            
+            // Set header
+            $sheet->setCellValue('A1', 'LAPORAN PENYEWAAN MOBIL');
+            $sheet->mergeCells('A1:J1');
+            
+            // Set periode
+            $dateRangeText = "Periode: " . ($request->start_date ? Carbon::parse($request->start_date)->format('d/m/Y') : 'All Time');
+            if ($request->end_date) {
+                $dateRangeText .= " - " . Carbon::parse($request->end_date)->format('d/m/Y');
+            }
+            $sheet->setCellValue('A2', $dateRangeText);
+            $sheet->mergeCells('A2:J2');
+
+            // Set headers
+            $headers = ['No', 'Kode Penyewaan', 'Customer', 'Mobil', 'Tanggal Mulai', 
+                       'Tanggal Selesai', 'Jam Mulai', 'Status', 'Total Biaya', 'Denda'];
+            foreach ($headers as $key => $header) {
+                $sheet->setCellValue(chr(65 + $key) . '4', $header);
+            }
+
+            // Style headers
+            $sheet->getStyle('A4:J4')->getFill()
+                ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
+                ->getStartColor()->setARGB('FFE1B48F');
+            $sheet->getStyle('A4:J4')->getFont()->setBold(true);
+            $sheet->getStyle('A4:J4')->getAlignment()->setHorizontal('center');
+            
+            // Get data
+            $query = Penyewaan::with(['mobil', 'user']);
+            
+                if ($request->start_date) {
+                    $query->whereDate('created_at', '>=', $request->start_date);
+                }
+                if ($request->end_date) {
+                    $query->whereDate('created_at', '<=', $request->end_date);
+                }
+                if ($request->status) {
+                    $query->where('status', '<=', $request->status);
+                }
+
+            $adminUser = Auth::user();
+            if ($adminUser && $adminUser->hasRole('admin-kota')) {
+                $kotaId = Kota::where('nama', $adminUser->name)->first()->id;
+                $query->where('kota_id', $kotaId);
+            }
+            
+            $penyewaans = $query->latest()->get();
+
+            // Fill data
+            $row = 5;
+            foreach ($penyewaans as $index => $penyewaan) {
+                $sheet->setCellValue('A' . $row, $index + 1);
+                $sheet->setCellValue('B' . $row, $penyewaan->kode_penyewaan);
+                $sheet->setCellValue('C' . $row, $penyewaan->user->email ?? 'N/A');
+                $sheet->setCellValue('D' . $row, $penyewaan->mobil->merk ?? 'N/A');
+                $sheet->setCellValue('E' . $row, $penyewaan->tanggal_mulai);
+                $sheet->setCellValue('F' . $row, $penyewaan->tanggal_selesai);
+                $sheet->setCellValue('G' . $row, $penyewaan->jam_mulai);
+                $sheet->setCellValue('H' . $row, $penyewaan->status);
+                $sheet->setCellValue('I' . $row, $penyewaan->total_biaya);
+                $sheet->setCellValue('J' . $row, $penyewaan->denda ?? 0);
+                $row++;
+            }
+
+            // Set column width
+            foreach (range('A', 'J') as $column) {
+                $sheet->getColumnDimension($column)->setWidth(20);
+            }
+
+            // Set borders
+            $styleArray = [
+                'borders' => [
+                    'allBorders' => [
+                        'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                    ],
+                ],
+            ];
+            $sheet->getStyle('A4:J'.($row-1))->applyFromArray($styleArray);
+
+            // Create Excel file
+            $writer = new Xlsx($spreadsheet);
+            
+            $filename = 'Laporan_Penyewaan_'.date('Y-m-d').'.xlsx';
+            
+            header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+            header('Content-Disposition: attachment; filename="'.$filename.'"');
+            header('Cache-Control: max-age=0');
+            header('Cache-Control: max-age=1');
+            header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
+            header('Last-Modified: ' . gmdate('D, d M Y H:i:s') . ' GMT');
+            header('Cache-Control: cache, must-revalidate');
+            header('Pragma: public');
+            
+            $writer->save('php://output');
+            exit();
+            
+        } catch (\Exception $e) {
+            // Log error jika diperlukan
+            \Log::error('Excel generation error: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to generate Excel file'], 500);
+        }
     }
 
     public function userRentalHistory(Request $request)
@@ -186,7 +309,7 @@ class PenyewaanController extends Controller
             'kota_id' => 'required|integer',
             'tanggal_mulai' => 'required|date',
             'tanggal_selesai' => 'required|date|after_or_equal:tanggal_mulai',
-            'jam_mulai' => 'required|string', 
+            'jam_mulai' => 'required|string',
         ]);
 
         $availability = $this->checkAvailability(
@@ -213,7 +336,8 @@ class PenyewaanController extends Controller
             'delivery_id' => 'required|integer',
             'rentaloptions_id' => 'required|integer',
             'total_biaya' => 'required|numeric',
-            'alamat_pengantaran' => 'nullable|string'
+            'alamat_pengantaran' => 'nullable|string',
+            'deskripsi_alamat' => 'nullable|string'
         ]);
 
         // Check car availability including maintenance periods
@@ -234,7 +358,7 @@ class PenyewaanController extends Controller
 
         // Set maintenance end time
         $validated['maintenance_end'] = $availability['maintenance_end'];
-        
+
         // Create the rental record
         $penyewaan = Penyewaan::create([
             ...$validated,
@@ -262,7 +386,7 @@ class PenyewaanController extends Controller
     public function detail($uuid)
     {
         $base = Penyewaan::where('uuid', $uuid)
-            ->with(['user', 'mobil', 'kota', 'delivery','rentaloption'])
+            ->with(['user', 'mobil', 'kota', 'delivery', 'rentaloption'])
             ->first();
         return response()->json([
             'success' => true,
@@ -297,6 +421,7 @@ class PenyewaanController extends Controller
             'status',
             'total_biaya',
             'alamat_pengantaran',
+            'deskripsi_alamat',
             'mobil_id',
             'delivery_id'
 

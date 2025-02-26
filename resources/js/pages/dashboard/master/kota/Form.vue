@@ -1,4 +1,3 @@
-api
 <script setup lang="ts">
 import { block, unblock } from "@/libs/utils";
 import { onMounted, ref, watch, computed } from "vue";
@@ -58,10 +57,20 @@ function getEdit() {
     block(document.getElementById("form-user"));
     ApiService.get("kota/kota/edit", props.selected)
         .then(({ data }) => {
-            user.value = data.data;
+            const kotaData = {
+                ...data.data,
+                latitude: parseFloat(data.data.latitude),
+                longitude: parseFloat(data.data.longitude)
+            };
+
+            user.value = kotaData;
             foto.value = data.data.foto ? ["/storage/" + data.data.foto] : [];
+
+            // Add this for debugging
+            console.log('Loaded coordinates:', kotaData.latitude, kotaData.longitude);
         })
         .catch((err: any) => {
+            console.error('Edit error:', err);
             toast.error(err.response.data.message);
         })
         .finally(() => {
@@ -170,8 +179,8 @@ watch(
                         <label class="form-label fw-bold fs-6 required">
                             Lokasi
                         </label>
-                        <LeafletMapSelector v-model="user.alamat" v-model:latitude="user.latitude"
-                            v-model:longitude="user.longitude" />
+                        <LeafletMapSelector v-model="user.alamat" :latitude="user.latitude" :longitude="user.longitude"
+                            @update:latitude="user.latitude = $event" @update:longitude="user.longitude = $event" />
                         <!-- Hidden input untuk alamat -->
                         <input type="hidden" name="alamat" :value="user.alamat" />
                         <div class="fv-plugins-message-container">

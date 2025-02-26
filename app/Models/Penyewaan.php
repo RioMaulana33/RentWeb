@@ -25,6 +25,7 @@ class Penyewaan extends Model
         'status',
         'total_biaya',
         'alamat_pengantaran',
+        'deskripsi_alamat',
         'waktu_pengembalian_aktual',
         'denda',
         'maintenance_end',

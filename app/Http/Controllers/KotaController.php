@@ -134,6 +134,17 @@ class KotaController extends Controller
         ]);
     }
 
+    public function checkRole()
+{
+    $user = Auth::user();
+    $role = $user->hasRole('admin-kota') ? 'admin-kota' : 'admin';
+    
+    return response()->json([
+        'status' => true,
+        'role' => $role
+    ]);
+}
+
     public function get()
     {
         return response()->json(['data' => Kota::all()]);

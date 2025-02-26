@@ -21,7 +21,7 @@ class PermissionSeeder extends Seeder
 
         $menuMaster = ['master', 'master-user', 'master-role', 'master-delivery','master-rentaloption', 'master-kota' ];
         $menuWebsite = ['website', 'setting','dashboard-penyewaan','dashboard-pembayaran','dashboard-laporan' ];
-        $menuAdminKota =['website','dashboard-penyewaan'];
+        $menuAdminKota =['website','dashboard-penyewaan','master-user'];
         $menuMobil =['kelola-mobil','kelola-mobil-detail','kelola-mobil-stok'];
 
         $permissionsByRole = [

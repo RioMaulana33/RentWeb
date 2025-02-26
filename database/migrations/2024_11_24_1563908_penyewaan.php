@@ -24,6 +24,7 @@ return new class extends Migration
             $table->date('tanggal_selesai')->nullable();    
             $table->time('jam_mulai')->nullable();
             $table->string('alamat_pengantaran')->nullable();
+            $table->string('deskripsi_alamat')->nullable();
             $table->enum('status',['pending', 'aktif', 'selesai'])->default('pending');
             $table->double('total_biaya')->nullable();
             $table->decimal('denda', 12, 2)->default(0);

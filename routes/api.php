@@ -53,6 +53,7 @@
         Route::prefix('user')->group(function () {
             Route::post('update', [UserController::class, 'updateMobile'])->withoutMiddleware('auth');
             Route::post('verify-document', [UserController::class, 'verifyDocument'])->withoutMiddleware('auth');
+
         });
     });
 
@@ -86,6 +87,7 @@
         Route::prefix('kota')->group(function () {
             Route::get('/get', [KotaController::class, 'get']);
             Route::get('/get-by-user', [KotaController::class, 'getByUser']);
+            Route::get('/check-role', [KotaController::class, 'checkRole']);
             Route::post('', [KotaController::class, 'index']);
             Route::post('/store', [KotaController::class, 'add']);
             Route::get('/kota/edit/{uuid}', [KotaController::class, 'edit']);
@@ -148,6 +150,7 @@
             Route::get('/penyewaan/detail/{uuid}', [PenyewaanController::class, 'detail']);
             Route::post('', [PenyewaanController::class, 'index']);
             Route::post('/history', [PenyewaanController::class, 'userRentalHistory']);
+            Route::get('/report/excel', [PenyewaanController::class, 'downloadExcel']);          
             Route::post('/store', [PenyewaanController::class, 'add']);
             Route::post('/check-stok', [PenyewaanController::class, 'checkStok']);
             Route::get('/penyewaan/edit/{uuid}', [PenyewaanController::class, 'edit']);

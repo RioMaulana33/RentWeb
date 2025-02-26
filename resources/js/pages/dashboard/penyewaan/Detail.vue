@@ -159,6 +159,10 @@ const getStatusBadge = (status: string) => {
                                             <label class="text-gray-400 mb-1 d-block">Alamat Pengantaran</label>
                                             <span class="">{{ rental.alamat_pengantaran || '-' }}</span>
                                         </div>
+                                        <div class="mt-4">
+                                            <label class="text-gray-400 mb-1 d-block">Deskripsi Alamat Pengantaran</label>
+                                            <span class="">{{ rental.deskripsi_alamat || '-' }}</span>
+                                        </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="mb-4">

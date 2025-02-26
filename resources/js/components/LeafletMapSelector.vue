@@ -262,9 +262,29 @@ watch(() => props.modelValue, (newValue) => {
   }
 });
 
-onMounted(() => {
-  initializeMap();
+onMounted(async () => {
+    await initializeMap();
+    
+    if (props.latitude && props.longitude) {
+        map.value.setView([props.latitude, props.longitude], 13);
+        marker.value.setLatLng([props.latitude, props.longitude]);
+        await updateMarkerPosition(props.latitude, props.longitude);
+    }
 });
+
+watch(
+    [() => props.latitude, () => props.longitude],
+    async ([newLat, newLng], [oldLat, oldLng]) => {
+        if (newLat && newLng && (newLat !== oldLat || newLng !== oldLng)) {
+            if (map.value && marker.value) {
+                map.value.setView([newLat, newLng], 13);
+                marker.value.setLatLng([newLat, newLng]);
+                await updateMarkerPosition(newLat, newLng);
+            }
+        }
+    },
+    { immediate: true }
+);
 </script>
 
 <template>
